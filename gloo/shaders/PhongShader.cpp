@@ -99,6 +99,7 @@ void PhongShader::SetTargetNode(const SceneNode& node,
 void PhongShader::SetCamera(const CameraComponent& camera) const {
   SetUniform("view_matrix", camera.GetViewMatrix());
   SetUniform("projection_matrix", camera.GetProjectionMatrix());
+  // TODO: change camera position calculation to be in line with Piazza post?
   SetUniform("camera_position",
              camera.GetNodePtr()->GetTransform().GetWorldPosition());
 }
