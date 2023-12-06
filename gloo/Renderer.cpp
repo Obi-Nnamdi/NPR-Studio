@@ -54,7 +54,6 @@ void Renderer::SetRenderingOptions() const {
 void Renderer::Render(const Scene& scene) const {
   SetRenderingOptions();
   RenderScene(scene);
-  DebugShadowMap();
 }
 
 void Renderer::RecursiveRetrieve(const SceneNode& node,
