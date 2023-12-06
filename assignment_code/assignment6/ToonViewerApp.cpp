@@ -33,17 +33,16 @@ void SetAmbientToDiffuse(GLOO::MeshData& mesh_data) {
 }  // namespace
 
 namespace GLOO {
-ToonViewerApp::ToonViewerApp(const std::string& app_name,
-                                 glm::ivec2 window_size)
-    : Application(app_name, window_size) {
-}
+ToonViewerApp::ToonViewerApp(const std::string& app_name, glm::ivec2 window_size,
+                             const std::string& model_filename)
+    : Application(app_name, window_size), model_filename_(model_filename) {}
 
 void ToonViewerApp::SetupScene() {
   SceneNode& root = scene_->GetRootNode();
 
   // Setting up the camera. PLEASE DO NOT MODIFY THE INITIAL CAMERA TRANSFORM.
   auto camera_node = make_unique<ArcBallCameraNode>(50.0f, 1.0f, 10.0f);
-  camera_node->GetTransform().SetPosition(glm::vec3(0.0f, -1.0f, 0.0f));
+  // camera_node->GetTransform().SetPosition(glm::vec3(0.0f, -1.0f, 0.0f));
   camera_node->GetTransform().SetRotation(glm::vec3(0.0f, 1.0f, 0.0f), kPi / 2);
   camera_node->Calibrate();
   scene_->ActivateCamera(camera_node->GetComponentPtr<CameraComponent>());
@@ -59,23 +58,32 @@ void ToonViewerApp::SetupScene() {
   // Add in the directional light as the sun.
   root.AddChild(make_unique<SunNode>());
 
-  // Load and set up the scene OBJ.
-  MeshData mesh_data =
-      MeshLoader::Import("assignment5/sponza_low/sponza_norm.obj");
-  SetAmbientToDiffuse(mesh_data);
-
+  // Create shader instance
   std::shared_ptr<PhongShader> shader = std::make_shared<PhongShader>();
-  std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
+  // Load and set up the scene OBJ if we have a specified model file.
+  // If not, load up a basic sphere.
+  if (model_filename_ != "") {
+    MeshData mesh_data = MeshLoader::Import(model_filename_);
+    SetAmbientToDiffuse(mesh_data);
 
-  // Create scene nodes for each mesh group
-  for (MeshGroup& group : mesh_data.groups) {
-    auto mesh_node = make_unique<SceneNode>();
-    mesh_node->CreateComponent<ShadingComponent>(shader);
-    mesh_node->CreateComponent<MaterialComponent>(group.material);
-    auto& renderComponent = mesh_node->CreateComponent<RenderingComponent>(vertex_obj);
-    // Query the mesh data to only draw the part of the larger mesh belonging to this node
-    renderComponent.SetDrawRange(group.start_face_index, group.num_indices);
-    root.AddChild(std::move(mesh_node));
+    std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
+
+    // Create scene nodes for each mesh group
+    for (MeshGroup& group : mesh_data.groups) {
+      auto mesh_node = make_unique<SceneNode>();
+      mesh_node->CreateComponent<ShadingComponent>(shader);
+      mesh_node->CreateComponent<MaterialComponent>(group.material);
+      auto& renderComponent = mesh_node->CreateComponent<RenderingComponent>(vertex_obj);
+      // Query the mesh data to only draw the part of the larger mesh belonging to this node
+      renderComponent.SetDrawRange(group.start_face_index, group.num_indices);
+      root.AddChild(std::move(mesh_node));
+    }
+  } else {
+    std::shared_ptr<VertexObject> sphere_mesh_ = PrimitiveFactory::CreateSphere(2.f, 64, 64);
+    auto sphere_node = make_unique<SceneNode>();
+    sphere_node->CreateComponent<ShadingComponent>(shader);
+    sphere_node->CreateComponent<RenderingComponent>(sphere_mesh_);
+    root.AddChild(std::move(sphere_node));
   }
 }
 

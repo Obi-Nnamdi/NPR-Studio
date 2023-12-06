@@ -5,8 +5,11 @@
 
 using namespace GLOO;
 
-int main() {
-  auto app = make_unique<ToonViewerApp>("Assignment5", glm::ivec2(1440, 900));
+int main(int argc, char** argv) {
+  // Populate the model to render with if it's specified
+  std::string filename = argc >= 2 ? std::string(argv[1]) : "";
+
+  auto app = make_unique<ToonViewerApp>("Assignment5", glm::ivec2(1440, 900), filename);
 
   app->SetupScene();
 
