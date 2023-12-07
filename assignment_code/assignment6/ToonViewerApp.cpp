@@ -1,23 +1,23 @@
 #include "ToonViewerApp.hpp"
 
-#include <glm/gtx/string_cast.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 
-#include "gloo/shaders/PhongShader.hpp"
-#include "gloo/shaders/SimpleShader.hpp"
-#include "gloo/components/RenderingComponent.hpp"
-#include "gloo/components/ShadingComponent.hpp"
+#include "SunNode.hpp"
+#include "gloo/MeshLoader.hpp"
+#include "gloo/cameras/ArcBallCameraNode.hpp"
+#include "gloo/cameras/BasicCameraNode.hpp"
 #include "gloo/components/CameraComponent.hpp"
 #include "gloo/components/LightComponent.hpp"
 #include "gloo/components/MaterialComponent.hpp"
-#include "gloo/MeshLoader.hpp"
+#include "gloo/components/RenderingComponent.hpp"
+#include "gloo/components/ShadingComponent.hpp"
+#include "gloo/debug/PrimitiveFactory.hpp"
 #include "gloo/lights/AmbientLight.hpp"
 #include "gloo/lights/PointLight.hpp"
-#include "gloo/cameras/BasicCameraNode.hpp"
-#include "gloo/cameras/ArcBallCameraNode.hpp"
-#include "gloo/debug/PrimitiveFactory.hpp"
-
-#include "SunNode.hpp"
+#include "gloo/shaders/PhongShader.hpp"
+#include "gloo/shaders/SimpleShader.hpp"
+#include "gloo/shaders/ToneMappingShader.hpp"
 
 namespace {
 void SetAmbientToDiffuse(GLOO::MeshData& mesh_data) {
@@ -59,7 +59,7 @@ void ToonViewerApp::SetupScene() {
   root.AddChild(make_unique<SunNode>());
 
   // Create shader instance
-  std::shared_ptr<PhongShader> shader = std::make_shared<PhongShader>();
+  auto shader = std::make_shared<ToneMappingShader>();
   // Load and set up the scene OBJ if we have a specified model file.
   // If not, load up a basic sphere.
   if (model_filename_ != "") {
