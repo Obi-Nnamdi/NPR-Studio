@@ -53,10 +53,19 @@ void ToonViewerApp::SetupScene() {
   ambient_light->SetAmbientColor(glm::vec3(0.15f));
   auto ambient_node = make_unique<SceneNode>();
   ambient_node->CreateComponent<LightComponent>(ambient_light);
-  root.AddChild(std::move(ambient_node));
+  // root.AddChild(std::move(ambient_node));
 
   // Add in the directional light as the sun.
   root.AddChild(make_unique<SunNode>());
+
+  // Add in a point light
+  auto point_light = std::make_shared<PointLight>();
+  point_light->SetAttenuation(glm::vec3(0.3));
+  point_light->SetDiffuseColor(glm::vec3(1.));
+  auto point_node = make_unique<SceneNode>();
+  point_node->GetTransform().SetPosition(glm::vec3(0, 2, 0));
+  point_node->CreateComponent<LightComponent>(point_light);
+  // root.AddChild(std::move(point_node));
 
   // Create shader instance
   auto shader = std::make_shared<ToneMappingShader>();

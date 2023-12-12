@@ -55,8 +55,10 @@ void ToneMappingShader::SetTargetNode(const SceneNode& node, const glm::mat4& mo
   }
 
   // TODO: make high and low colors part of GLOO::Material
-  SetUniform("material.low_color", glm::vec3(0.0));   // black low color
-  SetUniform("material.high_color", glm::vec3(1.0));  // white high color
+  float b = .8;
+  float y = .8;
+  SetUniform("material.low_color", glm::vec3(0, 0, b));   // black low color
+  SetUniform("material.high_color", glm::vec3(y, y, 0));  // white high color
 }
 
 void ToneMappingShader::SetCamera(const CameraComponent& camera) const {

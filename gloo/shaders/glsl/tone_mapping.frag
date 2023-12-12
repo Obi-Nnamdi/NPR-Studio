@@ -55,13 +55,18 @@ void main() {
         frag_color += vec4(CalcAmbientLight(), 1.0);
     }
     
-    // if (point_light.enabled) {
-    //     frag_color += vec4(CalcPointLight(normal, view_dir), 1.0);
-    // }
+    if (point_light.enabled) {
+        frag_color += vec4(CalcPointLight(normal, view_dir), 1.0);
+    }
 
     if (directional_light.enabled) {
         frag_color += vec4(CalcDirectionalLight(normal, view_dir), 1.0);
     }
+}
+
+
+float desaturate(vec3 color) {
+    return 0.3 * color.r + 0.59 * color.g + 0.11 * color.b;
 }
 
 vec3 GetAmbientColor() {
@@ -85,41 +90,53 @@ vec3 GetLowColor() {
 }
 
 vec3 CalcAmbientLight() {
-    return ambient_light.ambient * GetAmbientColor();
+    return mix(GetLowColor(), GetHighColor(), desaturate(ambient_light.ambient));
+    
 }
 
-// vec3 CalcPointLight(vec3 normal, vec3 view_dir) {
-//     PointLight light = point_light;
-//     vec3 light_dir = normalize(light.position - world_position);
+vec3 CalcPointLight(vec3 normal, vec3 view_dir) {
+    PointLight light = point_light;
+    vec3 light_dir = normalize(light.position - world_position);
+    // TODO: handle tone mapping for point lights (and multiple lights in general lol)
+    // Replace `GetDiffuseColor` here for tone mapping (between cool and warm color)
+    // Try multiple options for getting point lights to work lol, the goal is to keep 
+    // the final illumination the same b/t 
 
-//     float diffuse_intensity = max(dot(normal, light_dir), 0.0);
-//     vec3 diffuse_color = diffuse_intensity * light.diffuse * GetDiffuseColor();
-//     // TODO: handle tone mapping for point lights (and multiple lights in general lol)
-//     // Replace `GetDiffuseColor` here for tone mapping (between cool and warm color)
-//     // Try multiple options for getting point lights to work lol, the goal is to keep 
-//     // the final illumination the same b/t 
+    float distance = length(light.position - world_position);
+    float attenuation = 1.0 / (light.attenuation.x + 
+        light.attenuation.y * distance + 
+        light.attenuation.z * (distance * distance));
 
-//     vec3 reflect_dir = reflect(-light_dir, normal);
-//     float specular_intensity = pow(
-//         max(dot(view_dir, reflect_dir), 0.0), material.shininess);
-//     vec3 specular_color = specular_intensity * 
-//         light.specular * GetSpecularColor();
+    float lambertian_term = dot(normal, light_dir); // from [-1, 1]
+    float color_mix_factor = (1 + lambertian_term) / 2; // from [0, 1]
+    vec3 tone_color = attenuation * color_mix_factor * GetHighColor() + (1 - attenuation) * (1 - color_mix_factor) * GetLowColor();
 
-//     float distance = length(light.position - world_position);
-//     float attenuation = 1.0 / (light.attenuation.x + 
-//         light.attenuation.y * distance + 
-//         light.attenuation.z * (distance * distance));
+    return tone_color;
 
-//     return attenuation * (diffuse_color + specular_color);
-// }
+
+    // vec3 reflect_dir = reflect(-light_dir, normal);
+    // float specular_intensity = pow(
+    //     max(dot(view_dir, reflect_dir), 0.0), material.shininess);
+    // vec3 specular_color = specular_intensity * 
+    //     light.specular * GetSpecularColor();
+
+    // float distance = length(light.position - world_position);
+    // float attenuation = 1.0 / (light.attenuation.x + 
+    //     light.attenuation.y * distance + 
+    //     light.attenuation.z * (distance * distance));
+
+    // return attenuation * (diffuse_color + specular_color);
+}
 
 vec3 CalcDirectionalLight(vec3 normal, vec3 view_dir) {
     // Shade using Tone Mapping
     vec3 light_dir = normalize(-directional_light.direction);
     float lambertian_term = dot(normal, light_dir); // from [-1, 1]
-    float color_mix_factor = (1 + lambertian_term) / 2; // from [0, 1]
+    // TODO Delete this:
+    // float color_mix_factor = step(0.5, (1 + lambertian_term) / 2); // from [0, 1]
+    float color_mix_factor =(1 + lambertian_term) / 2; // from [0, 1]
     // Tone mapping equation. Adapted from Gooch et al. (1998):
-    // TODO: try both
+    // TODO: try both (they're the same)
     // vec3 tone_color = mix(GetLowColor(), GetHighColor(), color_mix_factor);
     vec3 tone_color = color_mix_factor * GetHighColor() + (1 - color_mix_factor) * GetLowColor();
 
