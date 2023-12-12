@@ -108,8 +108,8 @@ vec3 CalcPointLight(vec3 normal, vec3 view_dir) {
         light.attenuation.z * (distance * distance));
 
     float lambertian_term = dot(normal, light_dir); // from [-1, 1]
-    float color_mix_factor = (1 + lambertian_term) / 2; // from [0, 1]
-    vec3 tone_color = attenuation * color_mix_factor * GetHighColor() + (1 - attenuation) * (1 - color_mix_factor) * GetLowColor();
+    float color_mix_factor = attenuation * (1 + lambertian_term) / 2; // from [0, 1]
+    vec3 tone_color = color_mix_factor * GetHighColor() + (1 - color_mix_factor) * GetLowColor();
 
     return tone_color;
 
