@@ -52,6 +52,7 @@ OutlineNode::OutlineNode() : SceneNode() {
   SetupEdgeMaps();
   // Precompute Border and Crease Edges:
   ComputeBorderEdges();
+  ComputeCreaseEdges();  // Note: this should be done in Update if the model geometry changes.
 }
 
 void OutlineNode::Update(double delta_time) { RenderEdges(); }
@@ -136,6 +137,27 @@ void OutlineNode::ComputeBorderEdges() {
     if (faces.size() == 1) {
       edge_info_map_[edge].is_border = true;
       std::cout << "Border Edge:";
+      PrintEdge(edge);
+    }
+  }
+}
+
+void OutlineNode::ComputeCreaseEdges() {
+  // From Lake et al. (2000), A crease edge is detected when the dihedral angle between two faces is
+  // greater than a given threshold.
+  for (const auto& item : edge_face_map_) {
+    Edge edge = item.first;
+    auto faces = item.second;
+    if (faces.size() != 2) {
+      continue;
+    }
+    glm::vec3 face1_n = faces[0].normal;
+    glm::vec3 face2_n = faces[1].normal;
+    float angleBetween =
+        glm::acos(glm::dot(face1_n, face2_n) / (glm::length(face1_n) * glm::length(face2_n)));
+    if (angleBetween > crease_threshold_) {
+      edge_info_map_[edge].is_crease = true;
+      std::cout << "Crease Edge:";
       PrintEdge(edge);
     }
   }

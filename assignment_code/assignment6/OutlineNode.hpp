@@ -57,6 +57,7 @@ class OutlineNode : public SceneNode {
  private:
   void SetupEdgeMaps();
   void ComputeBorderEdges();
+  void ComputeCreaseEdges();
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
   void RenderEdges(bool silhouette = true, bool border = true, bool crease = true);
   std::unordered_map<Edge, std::vector<Face>, pairhash, KeyEqual> edge_face_map_;
@@ -69,6 +70,7 @@ class OutlineNode : public SceneNode {
   std::shared_ptr<VertexObject> outline_mesh_;
 
   const float line_bias_ = 0.005;
+  float crease_threshold_ = glm::radians(10.f);
 };
 }  // namespace GLOO
 
