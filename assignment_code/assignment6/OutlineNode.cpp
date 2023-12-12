@@ -15,14 +15,61 @@ OutlineNode::OutlineNode() : SceneNode() {
   // Create things we need for rendering
   // TODO: change constructor to allow custom imports
   mesh_ = PrimitiveFactory::CreateCylinder(1.f, 1, 32);
+  //   mesh_ = PrimitiveFactory::CreateQuad();
+
+  // Since our mesh is static, we only need to set the outline mesh's vertex positions once
+  // (we'll change the indices a lot though).
+  outline_mesh_ = std::make_shared<VertexObject>();
+
+  // TODO: Helper Function lol
+  // Offset the actual positions we'll use slightly in the vertex normal direction to prevent
+  // z-fighting
+  auto mesh_positions = mesh_->GetPositions();
+  auto mesh_normals = (mesh_->GetNormals());
+  for (int i = 0; i < mesh_positions.size(); i++) {
+    mesh_positions[i] += mesh_normals[i] * line_bias_;
+  }
+  outline_mesh_->UpdatePositions(make_unique<PositionArray>(mesh_positions));
+  auto& rc_node = CreateComponent<RenderingComponent>(outline_mesh_);
+  rc_node.SetDrawMode(DrawMode::Lines);
+
   mesh_shader_ = std::make_shared<ToneMappingShader>();
   outline_shader_ = std::make_shared<SimpleShader>();
+  CreateComponent<ShadingComponent>(outline_shader_);
+
+  // Material
+  auto mat = std::make_shared<Material>();
+  mat->SetDiffuseColor(glm::vec3(1.));
+  CreateComponent<MaterialComponent>(mat);
+
+  // Child Scene Node for actual mesh
+  auto meshNode = make_unique<SceneNode>();
+  meshNode->CreateComponent<RenderingComponent>(mesh_);
+  meshNode->CreateComponent<ShadingComponent>(mesh_shader_);
+  AddChild(std::move(meshNode));
+
+  // Outline Specific Setup:
   SetupEdgeMaps();
   // Precompute Border and Crease Edges:
   ComputeBorderEdges();
 }
 
-void OutlineNode::Update(double delta_time) {}
+void OutlineNode::Update(double delta_time) { RenderEdges(); }
+
+void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
+  auto newIndices = make_unique<IndexArray>();
+  for (const auto& item : edge_info_map_) {
+    Edge edge = item.first;
+    EdgeInfo info = item.second;
+    // Only draw edges that we allow
+    if ((info.is_silhouette && silhouette) || (info.is_border && border) ||
+        (info.is_crease && crease)) {
+      newIndices->push_back(edge.first);
+      newIndices->push_back(edge.second);
+    }
+  }
+  outline_mesh_->UpdateIndices(std::move(newIndices));
+}
 
 void PrintEdge(Edge edge) {
   std::cout << "[" << edge.first << ", " << edge.second << "]" << std::endl;

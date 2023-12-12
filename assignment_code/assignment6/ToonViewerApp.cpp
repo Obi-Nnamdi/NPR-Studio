@@ -97,7 +97,7 @@ void ToonViewerApp::SetupScene() {
     auto sphere_node = make_unique<SceneNode>();
     sphere_node->CreateComponent<ShadingComponent>(shader);
     sphere_node->CreateComponent<RenderingComponent>(sphere_mesh_);
-    root.AddChild(std::move(sphere_node));
+    // root.AddChild(std::move(sphere_node));
   }
 }
 
