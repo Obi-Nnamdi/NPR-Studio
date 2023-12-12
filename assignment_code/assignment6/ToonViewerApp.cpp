@@ -3,6 +3,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include "OutlineNode.hpp"
 #include "SunNode.hpp"
 #include "gloo/MeshLoader.hpp"
 #include "gloo/cameras/ArcBallCameraNode.hpp"
@@ -67,6 +68,9 @@ void ToonViewerApp::SetupScene() {
   point_node->GetTransform().SetPosition(glm::vec3(0, 2, 0));
   point_node->CreateComponent<LightComponent>(point_light);
   root.AddChild(std::move(point_node));
+
+  // Create outline node
+  root.AddChild(make_unique<OutlineNode>());
 
   // Create shader instance
   auto shader = std::make_shared<ToonShader>();
