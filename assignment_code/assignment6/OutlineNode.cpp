@@ -11,10 +11,12 @@
 #include "gloo/shaders/ToneMappingShader.hpp"
 
 namespace GLOO {
-OutlineNode::OutlineNode() : SceneNode() {
+OutlineNode::OutlineNode(const Scene* scene) : SceneNode() {
+  parent_scene_ = scene;
   // Create things we need for rendering
   // TODO: change constructor to allow custom imports
   mesh_ = PrimitiveFactory::CreateCylinder(1.f, 1, 32);
+  //   mesh_ = PrimitiveFactory::CreateSphere(1.f, 64, 64);
   //   mesh_ = PrimitiveFactory::CreateQuad();
 
   // Since our mesh is static, we only need to set the outline mesh's vertex positions once
@@ -55,7 +57,10 @@ OutlineNode::OutlineNode() : SceneNode() {
   ComputeCreaseEdges();  // Note: this should be done in Update if the model geometry changes.
 }
 
-void OutlineNode::Update(double delta_time) { RenderEdges(); }
+void OutlineNode::Update(double delta_time) {
+  ComputeSilhouetteEdges();
+  RenderEdges(true, false, false);
+}
 
 void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
   auto newIndices = make_unique<IndexArray>();
@@ -138,6 +143,8 @@ void OutlineNode::ComputeBorderEdges() {
       edge_info_map_[edge].is_border = true;
       std::cout << "Border Edge:";
       PrintEdge(edge);
+    } else {
+      edge_info_map_[edge].is_border = false;
     }
   }
 }
@@ -149,6 +156,7 @@ void OutlineNode::ComputeCreaseEdges() {
     Edge edge = item.first;
     auto faces = item.second;
     if (faces.size() != 2) {
+      edge_info_map_[edge].is_crease = false;
       continue;
     }
     glm::vec3 face1_n = faces[0].normal;
@@ -159,6 +167,37 @@ void OutlineNode::ComputeCreaseEdges() {
       edge_info_map_[edge].is_crease = true;
       std::cout << "Crease Edge:";
       PrintEdge(edge);
+    } else {
+      edge_info_map_[edge].is_crease = false;
+    }
+  }
+}
+
+void OutlineNode::ComputeSilhouetteEdges() {
+  // From Lake et al. (2000), an edge is marked as a silhouette edge if a front-facing and a
+  // back-facing polygon share the edge.
+  auto camera_pointer = parent_scene_->GetActiveCameraPtr();
+  glm::vec3 camera_position =
+      glm::vec3(glm::inverse(camera_pointer->GetViewMatrix()) * glm::vec4(0, 0, 0, 1.0));
+  glm::vec3 world_position = GetTransform().GetWorldPosition();
+  glm::vec3 camera_direction = camera_position - world_position;
+  for (const auto& item : edge_face_map_) {
+    Edge edge = item.first;
+    auto faces = item.second;
+    if (faces.size() != 2) {
+      edge_info_map_[edge].is_silhouette = false;
+      continue;
+    }
+    glm::vec3 face1_n = faces[0].normal;
+    glm::vec3 face2_n = faces[1].normal;
+    float silhouette_param =
+        glm::dot(face1_n, camera_direction) * glm::dot(face2_n, camera_direction);
+    if (silhouette_param <= 0) {
+      edge_info_map_[edge].is_silhouette = true;
+      std::cout << "Silhouette Edge:";
+      PrintEdge(edge);
+    } else {
+      edge_info_map_[edge].is_silhouette = false;
     }
   }
 }

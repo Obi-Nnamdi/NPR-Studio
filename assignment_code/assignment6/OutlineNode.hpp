@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 
+#include "gloo/Scene.hpp"
 #include "gloo/SceneNode.hpp"
 #include "gloo/VertexObject.hpp"
 #include "gloo/shaders/ShaderProgram.hpp"
@@ -51,13 +52,14 @@ struct EdgeInfo {
  */
 class OutlineNode : public SceneNode {
  public:
-  OutlineNode();
+  OutlineNode(const Scene *scene);
   void Update(double delta_time) override;
 
  private:
   void SetupEdgeMaps();
   void ComputeBorderEdges();
   void ComputeCreaseEdges();
+  void ComputeSilhouetteEdges();
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
   void RenderEdges(bool silhouette = true, bool border = true, bool crease = true);
   std::unordered_map<Edge, std::vector<Face>, pairhash, KeyEqual> edge_face_map_;
@@ -71,6 +73,7 @@ class OutlineNode : public SceneNode {
 
   const float line_bias_ = 0.005;
   float crease_threshold_ = glm::radians(10.f);
+  const Scene *parent_scene_;
 };
 }  // namespace GLOO
 

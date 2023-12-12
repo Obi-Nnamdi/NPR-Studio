@@ -70,7 +70,7 @@ void ToonViewerApp::SetupScene() {
   root.AddChild(std::move(point_node));
 
   // Create outline node
-  root.AddChild(make_unique<OutlineNode>());
+  root.AddChild(make_unique<OutlineNode>(scene_.get()));
 
   // Create shader instance
   auto shader = std::make_shared<ToonShader>();
