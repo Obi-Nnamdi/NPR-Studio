@@ -18,6 +18,7 @@
 #include "gloo/shaders/PhongShader.hpp"
 #include "gloo/shaders/SimpleShader.hpp"
 #include "gloo/shaders/ToneMappingShader.hpp"
+#include "gloo/shaders/ToonShader.hpp"
 
 namespace {
 void SetAmbientToDiffuse(GLOO::MeshData& mesh_data) {
@@ -56,7 +57,7 @@ void ToonViewerApp::SetupScene() {
   // root.AddChild(std::move(ambient_node));
 
   // Add in the directional light as the sun.
-  root.AddChild(make_unique<SunNode>());
+  // root.AddChild(make_unique<SunNode>());
 
   // Add in a point light
   auto point_light = std::make_shared<PointLight>();
@@ -65,10 +66,10 @@ void ToonViewerApp::SetupScene() {
   auto point_node = make_unique<SceneNode>();
   point_node->GetTransform().SetPosition(glm::vec3(0, 2, 0));
   point_node->CreateComponent<LightComponent>(point_light);
-  // root.AddChild(std::move(point_node));
+  root.AddChild(std::move(point_node));
 
   // Create shader instance
-  auto shader = std::make_shared<ToneMappingShader>();
+  auto shader = std::make_shared<ToonShader>();
   // Load and set up the scene OBJ if we have a specified model file.
   // If not, load up a basic sphere.
   if (model_filename_ != "") {
