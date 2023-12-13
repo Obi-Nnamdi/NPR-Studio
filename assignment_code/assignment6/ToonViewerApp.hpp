@@ -25,10 +25,12 @@ class ToonViewerApp : public Application {
   void UpdateSilhouetteStatus();
   void UpdateCreaseStatus();
   void UpdateBorderStatus();
+  void UpdateCreaseThreshold();
 
   bool showSilhouette = true;
   bool showCrease = true;
   bool showBorder = true;
+  float crease_threshold_ = 30;  // in degrees
 
   std::shared_ptr<ToonShader> toon_shader_;
   std::shared_ptr<ToneMappingShader> tone_mapping_shader_;

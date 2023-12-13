@@ -137,6 +137,12 @@ void ToonViewerApp::UpdateBorderStatus() {
   }
 }
 
+void ToonViewerApp::UpdateCreaseThreshold() {
+  for (auto node : outline_nodes_) {
+    node->SetCreaseThreshold(crease_threshold_);
+  }
+}
+
 void ToonViewerApp::DrawGUI() {
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   ImGui::Begin("Control Panel");
@@ -163,6 +169,11 @@ void ToonViewerApp::DrawGUI() {
 
   if (ImGui::Checkbox("Draw Border Edges", &showBorder)) {
     UpdateBorderStatus();
+  }
+
+  ImGui::Text("Crease Threshold:");
+  if (ImGui::SliderFloat("Degrees", &crease_threshold_, 0, 180, "%.1f")) {
+    UpdateCreaseThreshold();
   }
 
   ImGui::End();

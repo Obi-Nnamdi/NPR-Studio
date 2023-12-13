@@ -72,6 +72,8 @@ class OutlineNode : public SceneNode {
   void SetSilhouetteStatus(bool status);
   void SetCreaseStatus(bool status);
   void SetBorderStatus(bool status);
+  // Sets degree threshold for marking crease edges.
+  void SetCreaseThreshold(float degrees);
 
  private:
   void SetupEdgeMaps();
@@ -99,7 +101,7 @@ class OutlineNode : public SceneNode {
   bool show_crease_edges_ = true;
 
   const float line_bias_ = 0.001 / 2;
-  float crease_threshold_ = glm::radians(10.f);
+  float crease_threshold_ = glm::radians(30.f);
   const Scene *parent_scene_;
 };
 }  // namespace GLOO

@@ -122,6 +122,11 @@ void OutlineNode::ChangeMeshShader(std::shared_ptr<ShaderProgram> shader) {
   mesh_node_->GetComponentPtr<ShadingComponent>()->SetShader(mesh_shader_);
 }
 
+void OutlineNode::SetCreaseThreshold(float degrees) {
+  crease_threshold_ = glm::radians(degrees);
+  ComputeCreaseEdges();
+}
+
 void OutlineNode::Update(double delta_time) {
   // On each frame, recaclulate the silhouette edges and draw all update edges
   // Only recalculate silhouette edges when we're displaying them
