@@ -59,14 +59,6 @@ void ToonViewerApp::SetupScene() {
   sun_node_ = sun.get();
   root.AddChild(std::move(sun));
 
-  // Create outline node
-  // auto mesh = PrimitiveFactory::CreateQuad();
-  // auto outline_node = make_unique<OutlineNode>(scene_.get(), std::move(mesh),
-  // tone_mapping_shader_);
-  auto outline_node = make_unique<OutlineNode>(scene_.get(), nullptr, tone_mapping_shader_);
-  outline_nodes_.push_back(outline_node.get());
-  root.AddChild(std::move(outline_node));
-
   // Create shader instance
   auto shader = std::make_shared<ToneMappingShader>();
   // Load and set up the scene OBJ if we have a specified model file.
@@ -76,23 +68,29 @@ void ToonViewerApp::SetupScene() {
     SetAmbientToDiffuse(mesh_data);
 
     std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
+    // TODO: fix up materials
+
+    // Alternate way to load full model at once
+    // auto outline_node = make_unique<OutlineNode>(scene_.get(), vertex_obj, tone_mapping_shader_);
+    // outline_nodes_.push_back(outline_node.get());
+    // root.AddChild(std::move(outline_node));
 
     // Create scene nodes for each mesh group
     for (MeshGroup& group : mesh_data.groups) {
-      auto mesh_node = make_unique<SceneNode>();
-      mesh_node->CreateComponent<ShadingComponent>(shader);
-      mesh_node->CreateComponent<MaterialComponent>(group.material);
-      auto& renderComponent = mesh_node->CreateComponent<RenderingComponent>(vertex_obj);
       // Query the mesh data to only draw the part of the larger mesh belonging to this node
-      renderComponent.SetDrawRange(group.start_face_index, group.num_indices);
-      root.AddChild(std::move(mesh_node));
+      auto outline_node =
+          make_unique<OutlineNode>(scene_.get(), vertex_obj, group.start_face_index,
+                                   group.num_indices, group.material, tone_mapping_shader_);
+      outline_nodes_.push_back(outline_node.get());
+      root.AddChild(std::move(outline_node));
     }
   } else {
-    std::shared_ptr<VertexObject> sphere_mesh_ = PrimitiveFactory::CreateSphere(2.f, 64, 64);
-    auto sphere_node = make_unique<SceneNode>();
-    sphere_node->CreateComponent<ShadingComponent>(shader);
-    sphere_node->CreateComponent<RenderingComponent>(sphere_mesh_);
-    // root.AddChild(std::move(sphere_node));
+    // Other basic mesh options:
+    // std::shared_ptr<VertexObject> sphere_mesh_ = PrimitiveFactory::CreateSphere(2.f, 64, 64);
+    // auto mesh = PrimitiveFactory::CreateQuad();
+    auto outline_node = make_unique<OutlineNode>(scene_.get(), nullptr, tone_mapping_shader_);
+    outline_nodes_.push_back(outline_node.get());
+    root.AddChild(std::move(outline_node));
   }
 }
 

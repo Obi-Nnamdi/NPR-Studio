@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 
+#include "gloo/Material.hpp"
 #include "gloo/Scene.hpp"
 #include "gloo/SceneNode.hpp"
 #include "gloo/VertexObject.hpp"
@@ -57,6 +58,11 @@ class OutlineNode : public SceneNode {
   //  Defaults to tone mapping shader if shader not specified.
   //   Uses basic cylinder if mesh not specified.
   OutlineNode(const Scene *scene, const std::shared_ptr<VertexObject> mesh = nullptr,
+              const std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
+
+  // Constructor for rendering a piece of a mesh (where each part has its own material)
+  OutlineNode(const Scene *scene, const std::shared_ptr<VertexObject> mesh, const size_t startIndex,
+              const size_t numIndices, const std::shared_ptr<Material> mesh_material,
               const std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
   void Update(double delta_time) override;
   // Change shader applied to outline mesh

@@ -3,6 +3,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "assignment_code/common/helpers.hpp"
+#include "gloo/Material.hpp"
 #include "gloo/MeshLoader.hpp"
 #include "gloo/SceneNode.hpp"
 #include "gloo/components/MaterialComponent.hpp"
@@ -30,6 +31,37 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   // Precompute Border and Crease Edges:
   ComputeBorderEdges();
   ComputeCreaseEdges();  // Note: this should be done in Update if the model geometry changes.
+}
+
+OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject> mesh,
+                         const size_t startIndex, const size_t numIndices,
+                         const std::shared_ptr<Material> mesh_material,
+                         const std::shared_ptr<ShaderProgram> mesh_shader)
+    : SceneNode(), parent_scene_(scene) {
+  mesh_ = std::make_shared<VertexObject>();
+  auto mesh_positions = mesh->GetPositions();
+  mesh_->UpdatePositions(make_unique<PositionArray>(mesh_positions));
+  mesh_->UpdateNormals(make_unique<NormalArray>(mesh->GetNormals()));
+
+  // Slice the original mesh indices using the constructor parameters to get the edges we're
+  // actually rendering
+  auto mesh_indices = mesh->GetIndices();
+  size_t startVertexIndex = startIndex;
+  auto start = mesh_indices.begin() + startVertexIndex;
+  auto end = mesh_indices.begin() + startVertexIndex + numIndices;
+  IndexArray truncated_mesh_indices(start, end);
+  mesh_->UpdateIndices(make_unique<IndexArray>(truncated_mesh_indices));
+
+  SetOutlineMesh();
+  DoRenderSetup(mesh_shader);
+  // Add the specific material we have to this mesh
+  mesh_node_->CreateComponent<MaterialComponent>(mesh_material);
+
+  // Outline Specific Setup:
+  SetupEdgeMaps();
+  // Precompute Border and Crease Edges:
+  ComputeBorderEdges();
+  ComputeCreaseEdges();
 }
 
 void OutlineNode::SetOutlineMesh() {
