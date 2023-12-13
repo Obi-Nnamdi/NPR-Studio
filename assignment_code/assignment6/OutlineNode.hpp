@@ -90,7 +90,7 @@ class OutlineNode : public SceneNode {
 
   SceneNode *mesh_node_;
 
-  const float line_bias_ = 0.005;
+  const float line_bias_ = 0.001 / 2;
   float crease_threshold_ = glm::radians(10.f);
   const Scene *parent_scene_;
 };
