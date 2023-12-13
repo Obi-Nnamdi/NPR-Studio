@@ -42,20 +42,13 @@ ToonViewerApp::ToonViewerApp(const std::string& app_name, glm::ivec2 window_size
 void ToonViewerApp::SetupScene() {
   SceneNode& root = scene_->GetRootNode();
 
-  // Setting up the camera. PLEASE DO NOT MODIFY THE INITIAL CAMERA TRANSFORM.
+  // Setting up the camera.
   auto camera_node = make_unique<ArcBallCameraNode>(50.0f, 1.0f, 10.0f);
   // camera_node->GetTransform().SetPosition(glm::vec3(0.0f, -1.0f, 0.0f));
   camera_node->GetTransform().SetRotation(glm::vec3(0.0f, 1.0f, 0.0f), kPi / 2);
   camera_node->Calibrate();
   scene_->ActivateCamera(camera_node->GetComponentPtr<CameraComponent>());
   root.AddChild(std::move(camera_node));
-
-  // Add in the ambient light so the shadowed areas won't be completely black.
-  auto ambient_light = std::make_shared<AmbientLight>();
-  ambient_light->SetAmbientColor(glm::vec3(0.15f));
-  auto ambient_node = make_unique<SceneNode>();
-  ambient_node->CreateComponent<LightComponent>(ambient_light);
-  // root.AddChild(std::move(ambient_node));
 
   // Add in the sun.
   auto sun = make_unique<SunNode>();
