@@ -57,8 +57,10 @@ void ToonViewerApp::SetupScene() {
   ambient_node->CreateComponent<LightComponent>(ambient_light);
   // root.AddChild(std::move(ambient_node));
 
-  // Add in the directional light as the sun.
-  // root.AddChild(make_unique<SunNode>());
+  // Add in the sun.
+  auto sun = make_unique<SunNode>();
+  sun_node_ = sun.get();
+  root.AddChild(std::move(sun));
 
   // Add in a point light
   auto point_light = std::make_shared<PointLight>();
@@ -67,13 +69,13 @@ void ToonViewerApp::SetupScene() {
   auto point_node = make_unique<SceneNode>();
   point_node->GetTransform().SetPosition(glm::vec3(0, 2, 0));
   point_node->CreateComponent<LightComponent>(point_light);
-  root.AddChild(std::move(point_node));
+  // root.AddChild(std::move(point_node));
 
   // Create outline node
   root.AddChild(make_unique<OutlineNode>(scene_.get()));
 
   // Create shader instance
-  auto shader = std::make_shared<ToonShader>();
+  auto shader = std::make_shared<ToneMappingShader>();
   // Load and set up the scene OBJ if we have a specified model file.
   // If not, load up a basic sphere.
   if (model_filename_ != "") {
@@ -99,6 +101,16 @@ void ToonViewerApp::SetupScene() {
     sphere_node->CreateComponent<RenderingComponent>(sphere_mesh_);
     // root.AddChild(std::move(sphere_node));
   }
+}
+
+void ToonViewerApp::DrawGUI() {
+  // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
+  ImGui::Begin("Control Panel");
+  ImGui::Text("Lighting Controls");
+  if (ImGui::Button("Toggle Light Type")) {
+    sun_node_->ToggleLight();
+  }
+  ImGui::End();
 }
 
 }  // namespace GLOO

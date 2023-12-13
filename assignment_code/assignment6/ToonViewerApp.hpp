@@ -1,7 +1,7 @@
 #ifndef TOON_VIEWER_APP_H_
 #define TOON_VIEWER_APP_H_
+#include "SunNode.hpp"
 #include "gloo/Application.hpp"
-
 namespace GLOO {
 class ToonViewerApp : public Application {
  public:
@@ -9,8 +9,12 @@ class ToonViewerApp : public Application {
                 const std::string& model_filename);
   void SetupScene() override;
 
+ protected:
+  void DrawGUI() override;
+
  private:
   std::string model_filename_;
+  SunNode* sun_node_;
 };
 }  // namespace GLOO
 
