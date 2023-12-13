@@ -55,10 +55,12 @@ void ToonShader::SetTargetNode(const SceneNode& node, const glm::mat4& model_mat
   }
 
   // TODO: make high and low colors part of GLOO::Material
-  float b = .8;
-  float y = .8;
-  SetUniform("material.shadow_color", glm::vec3(0, 0, b));       // black low color
-  SetUniform("material.illuminated_color", glm::vec3(y, y, 0));  // white high color
+  // float b = .8;
+  // float y = .8;
+  // glm::vec3 (0, 0, b);
+  // glm::vec3 (y, y, 0);
+  SetUniform("material.shadow_color", glm::vec3(0.1));      // black low color
+  SetUniform("material.illuminated_color", glm::vec3(1.));  // white high color
 }
 
 void ToonShader::SetCamera(const CameraComponent& camera) const {

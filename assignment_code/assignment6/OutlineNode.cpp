@@ -2,6 +2,8 @@
 
 #include <glm/gtx/string_cast.hpp>
 
+#include "assignment_code/common/helpers.hpp"
+#include "gloo/MeshLoader.hpp"
 #include "gloo/SceneNode.hpp"
 #include "gloo/components/MaterialComponent.hpp"
 #include "gloo/components/RenderingComponent.hpp"
@@ -9,12 +11,17 @@
 #include "gloo/debug/PrimitiveFactory.hpp"
 #include "gloo/shaders/SimpleShader.hpp"
 #include "gloo/shaders/ToneMappingShader.hpp"
+#include "gloo/shaders/ToonShader.hpp"
 
 namespace GLOO {
 OutlineNode::OutlineNode(const Scene* scene) : SceneNode() {
   parent_scene_ = scene;
   // Create things we need for rendering
   // TODO: change constructor to allow custom imports
+  //   MeshData mesh_data = MeshLoader::Import("/sponza_low/sponza_norm.obj");
+
+  //   std::shared_ptr<VertexObject> mesh_ = std::move(mesh_data.vertex_obj);
+  //   mesh_->UpdateNormals(CalculateNormals(mesh_->GetPositions(), mesh_->GetIndices()));
   mesh_ = PrimitiveFactory::CreateCylinder(1.f, 1, 32);
   //   mesh_ = PrimitiveFactory::CreateSphere(1.f, 64, 64);
   //   mesh_ = PrimitiveFactory::CreateQuad();
@@ -48,6 +55,7 @@ OutlineNode::OutlineNode(const Scene* scene) : SceneNode() {
   auto meshNode = make_unique<SceneNode>();
   meshNode->CreateComponent<RenderingComponent>(mesh_);
   meshNode->CreateComponent<ShadingComponent>(mesh_shader_);
+  mesh_node_ = meshNode.get();
   AddChild(std::move(meshNode));
 
   // Outline Specific Setup:
@@ -57,9 +65,23 @@ OutlineNode::OutlineNode(const Scene* scene) : SceneNode() {
   ComputeCreaseEdges();  // Note: this should be done in Update if the model geometry changes.
 }
 
+void OutlineNode::ChangeMeshShader(ToonShadingType shadingType) {
+  if (shadingType == ToonShadingType::TOON) {
+    mesh_shader_ = std::make_shared<ToonShader>();
+  } else {
+    mesh_shader_ = std::make_shared<ToneMappingShader>();
+  }
+  mesh_node_->GetComponentPtr<ShadingComponent>()->SetShader(mesh_shader_);
+}
+
+void OutlineNode::ChangeMeshShader(std::shared_ptr<ShaderProgram> shader) {
+  mesh_shader_ = shader;
+  mesh_node_->GetComponentPtr<ShadingComponent>()->SetShader(mesh_shader_);
+}
+
 void OutlineNode::Update(double delta_time) {
   ComputeSilhouetteEdges();
-  RenderEdges(true, false, false);
+  RenderEdges(true, true, true);
 }
 
 void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
@@ -122,8 +144,6 @@ void OutlineNode::SetupEdgeMaps() {
         edge_info.is_crease = false;
         edge_info.is_silhouette = false;
         edge_info_map_[edge] = edge_info;
-      } else {
-        std::cout << "Old Edge" << std::endl;
       }
 
       // Edge face map
@@ -141,8 +161,8 @@ void OutlineNode::ComputeBorderEdges() {
     auto faces = item.second;
     if (faces.size() == 1) {
       edge_info_map_[edge].is_border = true;
-      std::cout << "Border Edge:";
-      PrintEdge(edge);
+      //   std::cout << "Border Edge:";
+      //   PrintEdge(edge);
     } else {
       edge_info_map_[edge].is_border = false;
     }
@@ -165,8 +185,8 @@ void OutlineNode::ComputeCreaseEdges() {
         glm::acos(glm::dot(face1_n, face2_n) / (glm::length(face1_n) * glm::length(face2_n)));
     if (angleBetween > crease_threshold_) {
       edge_info_map_[edge].is_crease = true;
-      std::cout << "Crease Edge:";
-      PrintEdge(edge);
+      //   std::cout << "Crease Edge:";
+      //   PrintEdge(edge);
     } else {
       edge_info_map_[edge].is_crease = false;
     }
@@ -194,8 +214,8 @@ void OutlineNode::ComputeSilhouetteEdges() {
         glm::dot(face1_n, camera_direction) * glm::dot(face2_n, camera_direction);
     if (silhouette_param <= 0) {
       edge_info_map_[edge].is_silhouette = true;
-      std::cout << "Silhouette Edge:";
-      PrintEdge(edge);
+      //   std::cout << "Silhouette Edge:";
+      //   PrintEdge(edge);
     } else {
       edge_info_map_[edge].is_silhouette = false;
     }

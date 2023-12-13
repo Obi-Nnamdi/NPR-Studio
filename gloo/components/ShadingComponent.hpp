@@ -14,6 +14,7 @@ class ShadingComponent : public ComponentBase {
   ShadingComponent(std::shared_ptr<ShaderProgram> shader)
       : shader_(std::move(shader)) {
   }
+  void SetShader(std::shared_ptr<ShaderProgram> shader) { shader_ = std::move(shader); }
   ShaderProgram* GetShaderPtr() {
     return shader_.get();
   }

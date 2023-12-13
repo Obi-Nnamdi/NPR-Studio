@@ -112,20 +112,6 @@ vec3 CalcPointLight(vec3 normal, vec3 view_dir) {
     vec3 tone_color = color_mix_factor * GetHighColor() + (1 - color_mix_factor) * GetLowColor();
 
     return tone_color;
-
-
-    // vec3 reflect_dir = reflect(-light_dir, normal);
-    // float specular_intensity = pow(
-    //     max(dot(view_dir, reflect_dir), 0.0), material.shininess);
-    // vec3 specular_color = specular_intensity * 
-    //     light.specular * GetSpecularColor();
-
-    // float distance = length(light.position - world_position);
-    // float attenuation = 1.0 / (light.attenuation.x + 
-    //     light.attenuation.y * distance + 
-    //     light.attenuation.z * (distance * distance));
-
-    // return attenuation * (diffuse_color + specular_color);
 }
 
 vec3 CalcDirectionalLight(vec3 normal, vec3 view_dir) {

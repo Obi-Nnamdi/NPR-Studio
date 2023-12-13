@@ -47,13 +47,20 @@ struct EdgeInfo {
   bool is_silhouette, is_crease, is_border;
 };
 
+enum ToonShadingType { TOON, TONE_MAPPING };
+
 /**
  * Class representing an object shaded with outlines.
  */
 class OutlineNode : public SceneNode {
  public:
+  //  TODO: parameters for initial shader and outline settings
   OutlineNode(const Scene *scene);
   void Update(double delta_time) override;
+  // Change shader applied to outline mesh
+  void ChangeMeshShader(std::shared_ptr<ShaderProgram> shader);
+  void ChangeMeshShader(ToonShadingType shaderType);
+  //   TODO: functions for turning edge types on and off
 
  private:
   void SetupEdgeMaps();
@@ -70,6 +77,8 @@ class OutlineNode : public SceneNode {
 
   std::shared_ptr<VertexObject> mesh_;
   std::shared_ptr<VertexObject> outline_mesh_;
+
+  SceneNode *mesh_node_;
 
   const float line_bias_ = 0.005;
   float crease_threshold_ = glm::radians(10.f);

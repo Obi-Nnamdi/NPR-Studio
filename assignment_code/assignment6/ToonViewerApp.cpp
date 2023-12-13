@@ -37,7 +37,11 @@ void SetAmbientToDiffuse(GLOO::MeshData& mesh_data) {
 namespace GLOO {
 ToonViewerApp::ToonViewerApp(const std::string& app_name, glm::ivec2 window_size,
                              const std::string& model_filename)
-    : Application(app_name, window_size), model_filename_(model_filename) {}
+    : Application(app_name, window_size), model_filename_(model_filename) {
+  toon_shader_ = std::make_shared<ToonShader>();
+  tone_mapping_shader_ = std::make_shared<ToneMappingShader>();
+  shading_type_ = ToonShadingType::TONE_MAPPING;
+}
 
 void ToonViewerApp::SetupScene() {
   SceneNode& root = scene_->GetRootNode();
@@ -65,7 +69,9 @@ void ToonViewerApp::SetupScene() {
   // root.AddChild(std::move(point_node));
 
   // Create outline node
-  root.AddChild(make_unique<OutlineNode>(scene_.get()));
+  auto outline_node = make_unique<OutlineNode>(scene_.get());
+  outline_nodes_.push_back(outline_node.get());
+  root.AddChild(std::move(outline_node));
 
   // Create shader instance
   auto shader = std::make_shared<ToneMappingShader>();
@@ -96,12 +102,36 @@ void ToonViewerApp::SetupScene() {
   }
 }
 
+void ToonViewerApp::ToggleShading() {
+  // Toggle shading type parameter
+  shading_type_ = shading_type_ == ToonShadingType::TOON ? ToonShadingType::TONE_MAPPING
+                                                         : ToonShadingType::TOON;
+
+  // Get associated shader
+  // TODO: Map data structure for easier logic?
+  std::shared_ptr<ShaderProgram> newShader;
+  if (shading_type_ == ToonShadingType::TOON) {
+    newShader = toon_shader_;
+  } else {
+    newShader = tone_mapping_shader_;
+  }
+
+  // Update outline nodes
+  for (auto node : outline_nodes_) {
+    node->ChangeMeshShader(newShader);
+  }
+}
+
 void ToonViewerApp::DrawGUI() {
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   ImGui::Begin("Control Panel");
-  ImGui::Text("Lighting Controls");
+  ImGui::Text("Lighting Controls:");
   if (ImGui::Button("Toggle Light Type")) {
     sun_node_->ToggleLight();
+  }
+  ImGui::Text("Shader Controls:");
+  if (ImGui::Button("Toggle Toon/Tone Mapping Shader")) {
+    ToggleShading();
   }
   ImGui::End();
 }
