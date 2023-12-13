@@ -102,7 +102,12 @@ void OutlineNode::DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader) {
   AddChild(std::move(meshNode));
 }
 
+void OutlineNode::SetSilhouetteStatus(bool status) { show_silhouette_edges_ = status; }
+void OutlineNode::SetCreaseStatus(bool status) { show_crease_edges_ = status; }
+void OutlineNode::SetBorderStatus(bool status) { show_border_edges_ = status; }
+
 void OutlineNode::ChangeMeshShader(ToonShadingType shadingType) {
+  // Create entirely new shader and assign it to mesh
   if (shadingType == ToonShadingType::TOON) {
     mesh_shader_ = std::make_shared<ToonShader>();
   } else {
@@ -112,25 +117,34 @@ void OutlineNode::ChangeMeshShader(ToonShadingType shadingType) {
 }
 
 void OutlineNode::ChangeMeshShader(std::shared_ptr<ShaderProgram> shader) {
+  // Directly substitute mesh shader for given shader
   mesh_shader_ = shader;
   mesh_node_->GetComponentPtr<ShadingComponent>()->SetShader(mesh_shader_);
 }
 
 void OutlineNode::Update(double delta_time) {
-  ComputeSilhouetteEdges();
-  RenderEdges(true, true, true);
+  // On each frame, recaclulate the silhouette edges and draw all update edges
+  // Only recalculate silhouette edges when we're displaying them
+  if (show_silhouette_edges_) {
+    ComputeSilhouetteEdges();
+  }
+  RenderEdges(show_silhouette_edges_, show_border_edges_, show_crease_edges_);
 }
 
 void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
   auto newIndices = make_unique<IndexArray>();
-  for (const auto& item : edge_info_map_) {
-    Edge edge = item.first;
-    EdgeInfo info = item.second;
-    // Only draw edges that we allow
-    if ((info.is_silhouette && silhouette) || (info.is_border && border) ||
-        (info.is_crease && crease)) {
-      newIndices->push_back(edge.first);
-      newIndices->push_back(edge.second);
+
+  // Only iterate through our edges if we're going to draw any of them
+  if (silhouette || border || crease) {
+    for (const auto& item : edge_info_map_) {
+      Edge edge = item.first;
+      EdgeInfo info = item.second;
+      // Only draw edges that we allow
+      if ((info.is_silhouette && silhouette) || (info.is_border && border) ||
+          (info.is_crease && crease)) {
+        newIndices->push_back(edge.first);
+        newIndices->push_back(edge.second);
+      }
     }
   }
   outline_mesh_->UpdateIndices(std::move(newIndices));

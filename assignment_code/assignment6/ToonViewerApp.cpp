@@ -116,17 +116,55 @@ void ToonViewerApp::ToggleShading() {
   }
 }
 
+void ToonViewerApp::UpdateSilhouetteStatus() {
+  // Update outline nodes
+  for (auto node : outline_nodes_) {
+    node->SetSilhouetteStatus(showSilhouette);
+  }
+}
+
+void ToonViewerApp::UpdateCreaseStatus() {
+  // Update outline nodes
+  for (auto node : outline_nodes_) {
+    node->SetCreaseStatus(showCrease);
+  }
+}
+
+void ToonViewerApp::UpdateBorderStatus() {
+  // Update outline nodes
+  for (auto node : outline_nodes_) {
+    node->SetBorderStatus(showBorder);
+  }
+}
+
 void ToonViewerApp::DrawGUI() {
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   ImGui::Begin("Control Panel");
   ImGui::Text("Lighting Controls:");
+  // Button for toggling light visibility
   if (ImGui::Button("Toggle Light Type")) {
     sun_node_->ToggleLight();
   }
   ImGui::Text("Shader Controls:");
+  // Button for toggling between our shader types
   if (ImGui::Button("Toggle Toon/Tone Mapping Shader")) {
     ToggleShading();
   }
+
+  // Checkboxes for toggling edge type displays
+  ImGui::Text("Edge Controls:");
+  if (ImGui::Checkbox("Draw Silhouette Edges", &showSilhouette)) {
+    UpdateSilhouetteStatus();
+  }
+
+  if (ImGui::Checkbox("Draw Crease Edges", &showCrease)) {
+    UpdateCreaseStatus();
+  }
+
+  if (ImGui::Checkbox("Draw Border Edges", &showBorder)) {
+    UpdateBorderStatus();
+  }
+
   ImGui::End();
 }
 

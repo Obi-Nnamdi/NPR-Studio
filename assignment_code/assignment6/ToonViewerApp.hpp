@@ -21,6 +21,14 @@ class ToonViewerApp : public Application {
   SunNode* sun_node_;
   std::vector<OutlineNode*> outline_nodes_;
   void ToggleShading();
+  // Functions for globally hiding or unhiding each edge type
+  void UpdateSilhouetteStatus();
+  void UpdateCreaseStatus();
+  void UpdateBorderStatus();
+
+  bool showSilhouette = true;
+  bool showCrease = true;
+  bool showBorder = true;
 
   std::shared_ptr<ToonShader> toon_shader_;
   std::shared_ptr<ToneMappingShader> tone_mapping_shader_;

@@ -68,7 +68,10 @@ class OutlineNode : public SceneNode {
   // Change shader applied to outline mesh
   void ChangeMeshShader(std::shared_ptr<ShaderProgram> shader);
   void ChangeMeshShader(ToonShadingType shaderType);
-  //   TODO: functions for turning edge types on and off
+  // Functions controlling visibility of various edge types
+  void SetSilhouetteStatus(bool status);
+  void SetCreaseStatus(bool status);
+  void SetBorderStatus(bool status);
 
  private:
   void SetupEdgeMaps();
@@ -77,6 +80,7 @@ class OutlineNode : public SceneNode {
   void ComputeSilhouetteEdges();
   void SetOutlineMesh();
   void DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
+
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
   void RenderEdges(bool silhouette = true, bool border = true, bool crease = true);
   std::unordered_map<Edge, std::vector<Face>, pairhash, KeyEqual> edge_face_map_;
@@ -89,6 +93,10 @@ class OutlineNode : public SceneNode {
   std::shared_ptr<VertexObject> outline_mesh_;
 
   SceneNode *mesh_node_;
+
+  bool show_silhouette_edges_ = true;
+  bool show_border_edges_ = true;
+  bool show_crease_edges_ = true;
 
   const float line_bias_ = 0.001 / 2;
   float crease_threshold_ = glm::radians(10.f);
