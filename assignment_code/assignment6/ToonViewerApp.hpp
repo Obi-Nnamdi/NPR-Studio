@@ -31,6 +31,7 @@ class ToonViewerApp : public Application {
   bool showCrease = true;
   bool showBorder = true;
   float crease_threshold_ = 30;  // in degrees
+  std::vector<float> background_color_;  // rbga 4-vector list of background color
 
   std::shared_ptr<ToonShader> toon_shader_;
   std::shared_ptr<ToneMappingShader> tone_mapping_shader_;

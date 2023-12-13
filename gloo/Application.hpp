@@ -26,6 +26,7 @@ class Application {
   }
   virtual void SetupScene() = 0;
   std::unique_ptr<Scene> scene_;
+  void SetBackgroundColor(const glm::vec4& color);
 
  private:
   void InitializeGLFW();

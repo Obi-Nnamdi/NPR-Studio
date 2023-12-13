@@ -38,6 +38,7 @@ namespace GLOO {
 ToonViewerApp::ToonViewerApp(const std::string& app_name, glm::ivec2 window_size,
                              const std::string& model_filename)
     : Application(app_name, window_size), model_filename_(model_filename) {
+  background_color_ = {0, 0, 0, 1};
   toon_shader_ = std::make_shared<ToonShader>();
   tone_mapping_shader_ = std::make_shared<ToneMappingShader>();
   shading_type_ = ToonShadingType::TONE_MAPPING;
@@ -151,7 +152,14 @@ void ToonViewerApp::DrawGUI() {
   if (ImGui::Button("Toggle Light Type")) {
     sun_node_->ToggleLight();
   }
+
   ImGui::Text("Shader Controls:");
+  // Controls background color of our scene
+  if (ImGui::ColorEdit4("Background Color", &background_color_.front())) {
+    // std::cout << background_color_[0] << std::endl;
+    SetBackgroundColor(glm::vec4(background_color_[0], background_color_[1], background_color_[2],
+                                 background_color_[3]));
+  }
   // Button for toggling between our shader types
   if (ImGui::Button("Toggle Toon/Tone Mapping Shader")) {
     ToggleShading();

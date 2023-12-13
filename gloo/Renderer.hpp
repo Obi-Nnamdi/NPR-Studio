@@ -17,6 +17,7 @@ class Renderer {
  public:
   Renderer(Application& application);
   void Render(const Scene& scene) const;
+  void SetBackgroundColor(const glm::vec4& color);
 
  private:
   using RenderingInfo = std::vector<std::pair<RenderingComponent*, glm::mat4>>;
@@ -35,6 +36,7 @@ class Renderer {
   void RenderTexturedQuad(const Texture& texture, bool is_depth) const;
   void DebugShadowMap() const;
 
+  glm::vec4 background_color_;
   std::unique_ptr<Texture> shadow_depth_tex_;
   std::unique_ptr<Framebuffer> shadow_buffer_;
   std::unique_ptr<ShadowShader> shadow_shader_;

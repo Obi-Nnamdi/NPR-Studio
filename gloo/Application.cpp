@@ -65,6 +65,10 @@ void Application::InitializeGLFW() {
   FramebufferSizeCallback(glm::ivec2(initial_width, initial_height));
 }
 
+void Application::SetBackgroundColor(const glm::vec4& color) {
+  renderer_->SetBackgroundColor(color);
+}
+
 void Application::InitializeGUI() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();

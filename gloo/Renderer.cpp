@@ -23,6 +23,7 @@ const glm::mat4 kLightProjection =
 namespace GLOO {
 Renderer::Renderer(Application& application) : application_(application) {
   UNUSED(application_);
+  background_color_ = glm::vec4(0.);
   // Reserve Space for Shadow Depth Texture
   shadow_depth_tex_ = make_unique<Texture>();
   shadow_depth_tex_->Reserve(GL_DEPTH_COMPONENT, kShadowWidth, kShadowHeight, GL_DEPTH_COMPONENT,
@@ -40,7 +41,8 @@ Renderer::Renderer(Application& application) : application_(application) {
 }
 
 void Renderer::SetRenderingOptions() const {
-  GL_CHECK(glClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+  GL_CHECK(glClearColor(background_color_.r, background_color_.g, background_color_.b,
+                        background_color_.a));
 
   // Enable depth test.
   GL_CHECK(glEnable(GL_DEPTH_TEST));
@@ -50,6 +52,8 @@ void Renderer::SetRenderingOptions() const {
   GL_CHECK(glEnable(GL_BLEND));
   GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
 }
+
+void Renderer::SetBackgroundColor(const glm::vec4& color) { background_color_ = color; }
 
 void Renderer::Render(const Scene& scene) const {
   SetRenderingOptions();
@@ -130,6 +134,14 @@ void Renderer::RenderScene(const Scene& scene) const {
 
   // The real shadow map/Phong shading passes.
   for (size_t light_id = 0; light_id < light_ptrs.size(); light_id++) {
+    // If we're rendering the first light (e.g. just putting the primitves down),
+    // don't actually add the pixel values, just substitute them.
+    // Otherwise, we add successive rendering passes.
+    if (light_id == 0) {
+      GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    } else {
+      GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
+    }
     LightComponent& light = *light_ptrs.at(light_id);
     // Render shadow maps for lights that can cast shadows
     glm::mat4 world_to_light_ndc_matrix;
