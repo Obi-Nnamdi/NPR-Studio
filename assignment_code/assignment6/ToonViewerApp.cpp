@@ -59,15 +59,6 @@ void ToonViewerApp::SetupScene() {
   sun_node_ = sun.get();
   root.AddChild(std::move(sun));
 
-  // Add in a point light
-  auto point_light = std::make_shared<PointLight>();
-  point_light->SetAttenuation(glm::vec3(0.3));
-  point_light->SetDiffuseColor(glm::vec3(1.));
-  auto point_node = make_unique<SceneNode>();
-  point_node->GetTransform().SetPosition(glm::vec3(0, 2, 0));
-  point_node->CreateComponent<LightComponent>(point_light);
-  // root.AddChild(std::move(point_node));
-
   // Create outline node
   // auto mesh = PrimitiveFactory::CreateQuad();
   // auto outline_node = make_unique<OutlineNode>(scene_.get(), std::move(mesh),
