@@ -65,6 +65,11 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
 }
 
 void OutlineNode::SetOutlineMesh() {
+  // Calculate normals if our mesh doesn't have any
+  if (!mesh_->HasNormals()) {
+    mesh_->UpdateNormals(CalculateNormals(mesh_->GetPositions(), mesh_->GetIndices()));
+  }
+
   outline_mesh_ = std::make_shared<VertexObject>();
   // Offset the actual positions we'll use slightly in the vertex normal direction to prevent
   // z-fighting

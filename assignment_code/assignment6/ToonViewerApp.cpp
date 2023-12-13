@@ -70,19 +70,21 @@ void ToonViewerApp::SetupScene() {
     std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
     // TODO: fix up materials
 
-    // Alternate way to load full model at once
-    // auto outline_node = make_unique<OutlineNode>(scene_.get(), vertex_obj, tone_mapping_shader_);
-    // outline_nodes_.push_back(outline_node.get());
-    // root.AddChild(std::move(outline_node));
-
-    // Create scene nodes for each mesh group
-    for (MeshGroup& group : mesh_data.groups) {
-      // Query the mesh data to only draw the part of the larger mesh belonging to this node
-      auto outline_node =
-          make_unique<OutlineNode>(scene_.get(), vertex_obj, group.start_face_index,
-                                   group.num_indices, group.material, tone_mapping_shader_);
+    if (mesh_data.groups.size() == 0) {
+      // load full model at once
+      auto outline_node = make_unique<OutlineNode>(scene_.get(), vertex_obj, tone_mapping_shader_);
       outline_nodes_.push_back(outline_node.get());
       root.AddChild(std::move(outline_node));
+    } else {
+      // Create scene nodes for each mesh group
+      for (MeshGroup& group : mesh_data.groups) {
+        // Query the mesh data to only draw the part of the larger mesh belonging to this node
+        auto outline_node =
+            make_unique<OutlineNode>(scene_.get(), vertex_obj, group.start_face_index,
+                                     group.num_indices, group.material, tone_mapping_shader_);
+        outline_nodes_.push_back(outline_node.get());
+        root.AddChild(std::move(outline_node));
+      }
     }
   } else {
     // Other basic mesh options:
