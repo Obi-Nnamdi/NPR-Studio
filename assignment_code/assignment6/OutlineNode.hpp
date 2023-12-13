@@ -54,8 +54,10 @@ enum ToonShadingType { TOON, TONE_MAPPING };
  */
 class OutlineNode : public SceneNode {
  public:
-  //  TODO: parameters for initial shader and outline settings
-  OutlineNode(const Scene *scene);
+  //  Defaults to tone mapping shader if shader not specified.
+  //   Uses basic cylinder if mesh not specified.
+  OutlineNode(const Scene *scene, const std::shared_ptr<VertexObject> mesh = nullptr,
+              const std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
   void Update(double delta_time) override;
   // Change shader applied to outline mesh
   void ChangeMeshShader(std::shared_ptr<ShaderProgram> shader);
@@ -67,6 +69,8 @@ class OutlineNode : public SceneNode {
   void ComputeBorderEdges();
   void ComputeCreaseEdges();
   void ComputeSilhouetteEdges();
+  void SetOutlineMesh();
+  void DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
   void RenderEdges(bool silhouette = true, bool border = true, bool crease = true);
   std::unordered_map<Edge, std::vector<Face>, pairhash, KeyEqual> edge_face_map_;

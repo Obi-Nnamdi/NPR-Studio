@@ -14,23 +14,26 @@
 #include "gloo/shaders/ToonShader.hpp"
 
 namespace GLOO {
-OutlineNode::OutlineNode(const Scene* scene) : SceneNode() {
-  parent_scene_ = scene;
+OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject> mesh,
+                         const std::shared_ptr<ShaderProgram> mesh_shader)
+    : SceneNode(), parent_scene_(scene) {
   // Create things we need for rendering
-  // TODO: change constructor to allow custom imports
-  //   MeshData mesh_data = MeshLoader::Import("/sponza_low/sponza_norm.obj");
-
-  //   std::shared_ptr<VertexObject> mesh_ = std::move(mesh_data.vertex_obj);
-  //   mesh_->UpdateNormals(CalculateNormals(mesh_->GetPositions(), mesh_->GetIndices()));
-  mesh_ = PrimitiveFactory::CreateCylinder(1.f, 1, 32);
-  //   mesh_ = PrimitiveFactory::CreateSphere(1.f, 64, 64);
-  //   mesh_ = PrimitiveFactory::CreateQuad();
+  mesh_ = mesh == nullptr ? PrimitiveFactory::CreateCylinder(1.f, 1, 32) : mesh;
 
   // Since our mesh is static, we only need to set the outline mesh's vertex positions once
   // (we'll change the indices a lot though).
-  outline_mesh_ = std::make_shared<VertexObject>();
+  SetOutlineMesh();
+  DoRenderSetup(mesh_shader);
 
-  // TODO: Helper Function lol
+  // Outline Specific Setup:
+  SetupEdgeMaps();
+  // Precompute Border and Crease Edges:
+  ComputeBorderEdges();
+  ComputeCreaseEdges();  // Note: this should be done in Update if the model geometry changes.
+}
+
+void OutlineNode::SetOutlineMesh() {
+  outline_mesh_ = std::make_shared<VertexObject>();
   // Offset the actual positions we'll use slightly in the vertex normal direction to prevent
   // z-fighting
   auto mesh_positions = mesh_->GetPositions();
@@ -39,14 +42,17 @@ OutlineNode::OutlineNode(const Scene* scene) : SceneNode() {
     mesh_positions[i] += mesh_normals[i] * line_bias_;
   }
   outline_mesh_->UpdatePositions(make_unique<PositionArray>(mesh_positions));
+}
+
+void OutlineNode::DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader) {
+  // Create new tone mapping shader if shader isn't specified
+  mesh_shader_ = mesh_shader == nullptr ? std::make_shared<ToneMappingShader>() : mesh_shader;
+  outline_shader_ = std::make_shared<SimpleShader>();
+  CreateComponent<ShadingComponent>(outline_shader_);
   auto& rc_node = CreateComponent<RenderingComponent>(outline_mesh_);
   rc_node.SetDrawMode(DrawMode::Lines);
 
-  mesh_shader_ = std::make_shared<ToneMappingShader>();
-  outline_shader_ = std::make_shared<SimpleShader>();
-  CreateComponent<ShadingComponent>(outline_shader_);
-
-  // Material
+  // Material (white color lines)
   auto mat = std::make_shared<Material>();
   mat->SetDiffuseColor(glm::vec3(1.));
   CreateComponent<MaterialComponent>(mat);
@@ -57,12 +63,6 @@ OutlineNode::OutlineNode(const Scene* scene) : SceneNode() {
   meshNode->CreateComponent<ShadingComponent>(mesh_shader_);
   mesh_node_ = meshNode.get();
   AddChild(std::move(meshNode));
-
-  // Outline Specific Setup:
-  SetupEdgeMaps();
-  // Precompute Border and Crease Edges:
-  ComputeBorderEdges();
-  ComputeCreaseEdges();  // Note: this should be done in Update if the model geometry changes.
 }
 
 void OutlineNode::ChangeMeshShader(ToonShadingType shadingType) {
@@ -208,6 +208,7 @@ void OutlineNode::ComputeSilhouetteEdges() {
       edge_info_map_[edge].is_silhouette = false;
       continue;
     }
+    // Perform silhouette edge test
     glm::vec3 face1_n = faces[0].normal;
     glm::vec3 face2_n = faces[1].normal;
     float silhouette_param =

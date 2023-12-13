@@ -69,7 +69,10 @@ void ToonViewerApp::SetupScene() {
   // root.AddChild(std::move(point_node));
 
   // Create outline node
-  auto outline_node = make_unique<OutlineNode>(scene_.get());
+  // auto mesh = PrimitiveFactory::CreateQuad();
+  // auto outline_node = make_unique<OutlineNode>(scene_.get(), std::move(mesh),
+  // tone_mapping_shader_);
+  auto outline_node = make_unique<OutlineNode>(scene_.get(), nullptr, tone_mapping_shader_);
   outline_nodes_.push_back(outline_node.get());
   root.AddChild(std::move(outline_node));
 
