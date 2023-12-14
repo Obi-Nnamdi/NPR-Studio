@@ -127,6 +127,20 @@ void OutlineNode::SetCreaseThreshold(float degrees) {
   ComputeCreaseEdges();
 }
 
+void OutlineNode::CalculateFaceDirections() {
+  // Get camera information
+  auto camera_pointer = parent_scene_->GetActiveCameraPtr();
+  glm::vec3 camera_position =
+      glm::vec3(glm::inverse(camera_pointer->GetViewMatrix()) * glm::vec4(0, 0, 0, 1.0));
+  glm::vec3 world_position = GetTransform().GetWorldPosition();
+  glm::vec3 camera_direction = camera_position - world_position;
+
+  // Iterate through faces and calculate if they're pointing towards or away the camera
+  for (auto face : faces_) {
+    face->front_facing = glm::dot(face->normal, camera_direction) >= 0;
+  }
+}
+
 void OutlineNode::Update(double delta_time) {
   // On each frame, recaclulate the silhouette edges and draw all update edges
   // Only recalculate silhouette edges when we're displaying them
@@ -180,11 +194,13 @@ void OutlineNode::SetupEdgeMaps() {
     auto face_normal = glm::normalize(glm::cross(p2 - p1, p3 - p1));
 
     // Define Face
-    Face face;
-    face.i1 = i1;
-    face.i2 = i2;
-    face.i3 = i3;
-    face.normal = face_normal;
+    std::shared_ptr<Face> face = std::make_shared<Face>();
+    face->i1 = i1;
+    face->i2 = i2;
+    face->i3 = i3;
+    face->normal = face_normal;
+
+    faces_.push_back(face);
 
     // Define Edges on Face
     Edge edge1(i1, i2);
@@ -235,8 +251,8 @@ void OutlineNode::ComputeCreaseEdges() {
       edge_info_map_[edge].is_crease = false;
       continue;
     }
-    glm::vec3 face1_n = faces[0].normal;
-    glm::vec3 face2_n = faces[1].normal;
+    glm::vec3 face1_n = faces[0]->normal;
+    glm::vec3 face2_n = faces[1]->normal;
     float angleBetween =
         glm::acos(glm::dot(face1_n, face2_n) / (glm::length(face1_n) * glm::length(face2_n)));
     if (angleBetween > crease_threshold_) {
@@ -252,11 +268,7 @@ void OutlineNode::ComputeCreaseEdges() {
 void OutlineNode::ComputeSilhouetteEdges() {
   // From Lake et al. (2000), an edge is marked as a silhouette edge if a front-facing and a
   // back-facing polygon share the edge.
-  auto camera_pointer = parent_scene_->GetActiveCameraPtr();
-  glm::vec3 camera_position =
-      glm::vec3(glm::inverse(camera_pointer->GetViewMatrix()) * glm::vec4(0, 0, 0, 1.0));
-  glm::vec3 world_position = GetTransform().GetWorldPosition();
-  glm::vec3 camera_direction = camera_position - world_position;
+  CalculateFaceDirections();
   for (const auto& item : edge_face_map_) {
     Edge edge = item.first;
     auto faces = item.second;
@@ -265,11 +277,7 @@ void OutlineNode::ComputeSilhouetteEdges() {
       continue;
     }
     // Perform silhouette edge test
-    glm::vec3 face1_n = faces[0].normal;
-    glm::vec3 face2_n = faces[1].normal;
-    float silhouette_param =
-        glm::dot(face1_n, camera_direction) * glm::dot(face2_n, camera_direction);
-    if (silhouette_param <= 0) {
+    if (faces[0]->front_facing != faces[1]->front_facing) {
       edge_info_map_[edge].is_silhouette = true;
       //   std::cout << "Silhouette Edge:";
       //   PrintEdge(edge);

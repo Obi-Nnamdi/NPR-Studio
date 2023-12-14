@@ -180,6 +180,7 @@ void ToonViewerApp::DrawGUI() {
   }
 
   ImGui::Text("Crease Threshold:");
+  // TODO: should this go to 360?
   if (ImGui::SliderFloat("Degrees", &crease_threshold_, 0, 180, "%.1f")) {
     UpdateCreaseThreshold();
   }

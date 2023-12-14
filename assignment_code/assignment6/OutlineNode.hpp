@@ -38,6 +38,7 @@ struct KeyEqual {
 struct Face {
   size_t i1, i2, i3;
   glm::vec3 normal;
+  bool front_facing;
 };
 
 // An edge is represented as a pair between two indices
@@ -81,12 +82,14 @@ class OutlineNode : public SceneNode {
   void ComputeCreaseEdges();
   void ComputeSilhouetteEdges();
   void SetOutlineMesh();
+  void CalculateFaceDirections();
   void DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
 
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
   void RenderEdges(bool silhouette = true, bool border = true, bool crease = true);
-  std::unordered_map<Edge, std::vector<Face>, pairhash, KeyEqual> edge_face_map_;
+  std::unordered_map<Edge, std::vector<std::shared_ptr<Face>>, pairhash, KeyEqual> edge_face_map_;
   std::unordered_map<Edge, EdgeInfo, pairhash, KeyEqual> edge_info_map_;
+  std::vector<std::shared_ptr<Face>> faces_;
 
   std::shared_ptr<ShaderProgram> mesh_shader_;
   std::shared_ptr<ShaderProgram> outline_shader_;
