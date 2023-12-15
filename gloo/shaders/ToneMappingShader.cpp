@@ -49,16 +49,20 @@ void ToneMappingShader::SetTargetNode(const SceneNode& node, const glm::mat4& mo
   MaterialComponent* material_component_ptr = node.GetComponentPtr<MaterialComponent>();
   const Material* material_ptr;
   if (material_component_ptr == nullptr) {
-    material_ptr = &Material::GetDefault();
+    material_ptr = &Material::GetDefaultNPR();
   } else {
     material_ptr = &material_component_ptr->GetMaterial();
   }
 
-  // TODO: make high and low colors part of GLOO::Material
-  float b = .8;
-  float y = .8;
-  SetUniform("material.low_color", glm::vec3(0, 0, b));   // black low color
-  SetUniform("material.high_color", glm::vec3(y, y, 0));  // white high color
+  // Use Material Properties to Set Tone Mapping
+  // TODO: Have some way to use the warm/cool color calculation
+  // for colors as part of some preset?
+  // float b = .8;
+  // float y = .8;
+  // glm::vec3(0, 0, b);
+  // glm::vec3(y, y, 0);
+  SetUniform("material.low_color", material_ptr->GetShadowColor());        // black low color
+  SetUniform("material.high_color", material_ptr->GetIlluminatedColor());  // white high color
 }
 
 void ToneMappingShader::SetCamera(const CameraComponent& camera) const {
