@@ -49,18 +49,19 @@ void ToonShader::SetTargetNode(const SceneNode& node, const glm::mat4& model_mat
   MaterialComponent* material_component_ptr = node.GetComponentPtr<MaterialComponent>();
   const Material* material_ptr;
   if (material_component_ptr == nullptr) {
-    material_ptr = &Material::GetDefault();
+    material_ptr = &Material::GetDefaultNPR();
   } else {
     material_ptr = &material_component_ptr->GetMaterial();
   }
 
-  // TODO: make high and low colors part of GLOO::Material
+  // For doing tone mapping between cool and warm tones
   // float b = .8;
   // float y = .8;
   // glm::vec3 (0, 0, b);
   // glm::vec3 (y, y, 0);
-  SetUniform("material.shadow_color", glm::vec3(0.1));      // black low color
-  SetUniform("material.illuminated_color", glm::vec3(1.));  // white high color
+  // TODO: make high and low colors part of GLOO::Material
+  SetUniform("material.shadow_color", material_ptr->GetShadowColor());
+  SetUniform("material.illuminated_color", material_ptr->GetIlluminatedColor());
 }
 
 void ToonShader::SetCamera(const CameraComponent& camera) const {

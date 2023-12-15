@@ -75,6 +75,9 @@ class OutlineNode : public SceneNode {
   void SetBorderStatus(bool status);
   // Sets degree threshold for marking crease edges.
   void SetCreaseThreshold(float degrees);
+  // Change material properties of outline node
+  void SetIlluminatedColor(const glm::vec3 &color);
+  void SetShadowColor(const glm::vec3 &color);
 
  private:
   void SetupEdgeMaps();

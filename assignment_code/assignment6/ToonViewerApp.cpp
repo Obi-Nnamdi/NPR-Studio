@@ -3,6 +3,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include "../common/helpers.hpp"
 #include "OutlineNode.hpp"
 #include "SunNode.hpp"
 #include "gloo/MeshLoader.hpp"
@@ -39,6 +40,8 @@ ToonViewerApp::ToonViewerApp(const std::string& app_name, glm::ivec2 window_size
                              const std::string& model_filename)
     : Application(app_name, window_size), model_filename_(model_filename) {
   background_color_ = {0, 0, 0, 1};
+  illumination_color_ = {0, 0, 0};
+  shadow_color_ = {0, 0, 0};
   toon_shader_ = std::make_shared<ToonShader>();
   tone_mapping_shader_ = std::make_shared<ToneMappingShader>();
   shading_type_ = ToonShadingType::TONE_MAPPING;
@@ -144,6 +147,18 @@ void ToonViewerApp::UpdateCreaseThreshold() {
   }
 }
 
+void ToonViewerApp::SetIlluminatedColor(const glm::vec3& color) {
+  for (auto node : outline_nodes_) {
+    node->SetIlluminatedColor(color);
+  }
+}
+
+void ToonViewerApp::SetShadowColor(const glm::vec3& color) {
+  for (auto node : outline_nodes_) {
+    node->SetShadowColor(color);
+  }
+}
+
 void ToonViewerApp::DrawGUI() {
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   ImGui::Begin("Control Panel");
@@ -156,9 +171,13 @@ void ToonViewerApp::DrawGUI() {
   ImGui::Text("Shader Controls:");
   // Controls background color of our scene
   if (ImGui::ColorEdit4("Background Color", &background_color_.front())) {
-    // std::cout << background_color_[0] << std::endl;
-    SetBackgroundColor(glm::vec4(background_color_[0], background_color_[1], background_color_[2],
-                                 background_color_[3]));
+    SetBackgroundColor(vectorToVec4(background_color_));
+  }
+  if (ImGui::ColorEdit3("Illumination Color", &illumination_color_.front())) {
+    SetIlluminatedColor(vectorToVec3(illumination_color_));
+  }
+  if (ImGui::ColorEdit3("Shadow Color", &shadow_color_.front())) {
+    SetShadowColor(vectorToVec3(shadow_color_));
   }
   // Button for toggling between our shader types
   if (ImGui::Button("Toggle Toon/Tone Mapping Shader")) {

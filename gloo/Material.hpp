@@ -12,23 +12,35 @@ class Material {
       : ambient_color_(0.0f),
         diffuse_color_(0.0f),
         specular_color_(0.0f),
-        shininess_(0.0f) {
-  }
-  Material(const glm::vec3& ambient_color,
-           const glm::vec3& diffuse_color,
-           const glm::vec3& specular_color,
-           float shininess)
+        shininess_(0.0f),
+        illuminated_color_(0.0f),
+        shadow_color_(0.0f) {}
+  Material(const glm::vec3& ambient_color, const glm::vec3& diffuse_color,
+           const glm::vec3& specular_color, float shininess)
       : ambient_color_(ambient_color),
         diffuse_color_(diffuse_color),
         specular_color_(specular_color),
-        shininess_(shininess) {
-  }
+        shininess_(shininess),
+        illuminated_color_(0.0f),
+        shadow_color_(0.0f) {}
+
+  Material(const glm::vec3& illuminated_color, const glm::vec3& shadow_color)
+      : ambient_color_(0.0f),
+        diffuse_color_(0.0f),
+        specular_color_(0.0f),
+        illuminated_color_(illuminated_color),
+        shadow_color_(shadow_color) {}
 
   static const Material& GetDefault() {
     static Material default_material(glm::vec3(0.5f, 0.1f, 0.2f),
                                      glm::vec3(0.5f, 0.1f, 0.2f),
                                      glm::vec3(0.4f, 0.4f, 0.4f), 20.0f);
     return default_material;
+  }
+
+  static const Material& GetDefaultNPR() {
+    static Material default_material_npr(glm::vec3(1.), glm::vec3(0.1));
+    return default_material_npr;
   }
 
   glm::vec3 GetAmbientColor() const {
@@ -62,6 +74,14 @@ class Material {
   void SetShininess(float shininess) {
     shininess_ = shininess;
   }
+
+  void SetShadowColor(const glm::vec3& color) { shadow_color_ = color; }
+  glm::vec3 GetShadowColor() const { return shadow_color_; }
+
+  void SetIlluminatedColor(const glm::vec3& color) { illuminated_color_ = color; }
+  glm::vec3 GetIlluminatedColor() const { return illuminated_color_; }
+
+  // TODO: SetCoolColor and SetWarmColor options?
   void SetAmbientTexture(std::shared_ptr<Texture> tex) {
     ambient_tex_ = std::move(tex);
   }
@@ -91,6 +111,9 @@ class Material {
   glm::vec3 diffuse_color_;
   glm::vec3 specular_color_;
   float shininess_;
+  // Used in NPR rendering
+  glm::vec3 illuminated_color_;
+  glm::vec3 shadow_color_;
   std::shared_ptr<Texture> ambient_tex_;
   std::shared_ptr<Texture> diffuse_tex_;
   std::shared_ptr<Texture> specular_tex_;

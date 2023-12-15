@@ -25,6 +25,9 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   // (we'll change the indices a lot though).
   SetOutlineMesh();
   DoRenderSetup(mesh_shader);
+  // Populate mesh with default material
+  mesh_node_->CreateComponent<MaterialComponent>(
+      std::make_shared<Material>(Material::GetDefaultNPR()));
 
   // Outline Specific Setup:
   SetupEdgeMaps();
@@ -125,6 +128,20 @@ void OutlineNode::ChangeMeshShader(std::shared_ptr<ShaderProgram> shader) {
 void OutlineNode::SetCreaseThreshold(float degrees) {
   crease_threshold_ = glm::radians(degrees);
   ComputeCreaseEdges();
+}
+
+void OutlineNode::SetIlluminatedColor(const glm::vec3& color) {
+  auto material = mesh_node_->GetComponentPtr<MaterialComponent>()->GetMaterial();
+  material.SetIlluminatedColor(color);
+  mesh_node_->GetComponentPtr<MaterialComponent>()->SetMaterial(
+      std::make_shared<Material>(material));
+}
+
+void OutlineNode::SetShadowColor(const glm::vec3& color) {
+  auto material = mesh_node_->GetComponentPtr<MaterialComponent>()->GetMaterial();
+  material.SetShadowColor(color);
+  mesh_node_->GetComponentPtr<MaterialComponent>()->SetMaterial(
+      std::make_shared<Material>(material));
 }
 
 void OutlineNode::CalculateFaceDirections() {

@@ -26,4 +26,18 @@ std::unique_ptr<NormalArray> CalculateNormals(const PositionArray& positions,
 
   return normals;
 }
+
+glm::vec4 vectorToVec4(const std::vector<float>& floatVector) {
+  if (floatVector.size() < 4) {
+    throw std::runtime_error("Invalid vector size to convert to vec4");
+  }
+  return glm::vec4(floatVector[0], floatVector[1], floatVector[2], floatVector[3]);
+}
+
+glm::vec3 vectorToVec3(const std::vector<float>& floatVector) {
+  if (floatVector.size() < 3) {
+    throw std::runtime_error("Invalid vector size to convert to vec3");
+  }
+  return glm::vec3(floatVector[0], floatVector[1], floatVector[2]);
+}
 }  // namespace GLOO
