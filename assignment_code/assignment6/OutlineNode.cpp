@@ -44,7 +44,11 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   mesh_ = std::make_shared<VertexObject>();
   auto mesh_positions = mesh->GetPositions();
   mesh_->UpdatePositions(make_unique<PositionArray>(mesh_positions));
-  mesh_->UpdateNormals(make_unique<NormalArray>(mesh->GetNormals()));
+  if (mesh->HasNormals()) {
+    mesh_->UpdateNormals(make_unique<NormalArray>(mesh->GetNormals()));
+  } else {
+    mesh_->UpdateNormals(CalculateNormals(mesh->GetPositions(), mesh->GetIndices()));
+  }
 
   // Slice the original mesh indices using the constructor parameters to get the edges we're
   // actually rendering

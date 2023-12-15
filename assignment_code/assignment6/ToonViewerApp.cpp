@@ -54,8 +54,10 @@ ToonViewerApp::ToonViewerApp(const std::string& app_name, glm::ivec2 window_size
                              const std::string& model_filename)
     : Application(app_name, window_size), model_filename_(model_filename) {
   background_color_ = {0, 0, 0, 1};
-  illumination_color_ = {0, 0, 0};
-  shadow_color_ = {0, 0, 0};
+  // These colors mirror the defaults found in Material::GetDefaultNPR().
+  // TOOD: better way to do this?
+  illumination_color_ = {1, 1, 1};
+  shadow_color_ = {.1, .1, .1};
   toon_shader_ = std::make_shared<ToonShader>();
   tone_mapping_shader_ = std::make_shared<ToneMappingShader>();
   shading_type_ = ToonShadingType::TONE_MAPPING;
@@ -200,7 +202,7 @@ void ToonViewerApp::DrawGUI() {
   if (ImGui::ColorEdit3("Shadow Color", &shadow_color_.front())) {
     SetShadowColor(vectorToVec3(shadow_color_));
   }
-  if (ImGui::Button("Reset Shader Colors to Material Diffuse")) {
+  if (ImGui::Button("Reset Colors to Material Diffuse")) {
     OverrideNPRColorsFromDiffuse(1.2, 0.5);
   }
   // Button for toggling between our shader types
