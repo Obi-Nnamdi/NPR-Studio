@@ -33,6 +33,20 @@ void SetAmbientToDiffuse(GLOO::MeshData& mesh_data) {
     }
   }
 }
+
+void SetNPRColorsFromDiffuse(GLOO::MeshData& mesh_data, float illuminationFactor = 1.5,
+                             float shadowFactor = .5) {
+  // For groups that don't have shadow/illuminated colors, we use their diffuse color * 1.5 as the
+  // illuminated color, and the diffuse color * .5 as the shadow color.
+  for (auto& g : mesh_data.groups) {
+    if (glm::length(g.material->GetIlluminatedColor()) < 1e-3) {
+      g.material->SetIlluminatedColor(illuminationFactor * g.material->GetDiffuseColor());
+    }
+    if (glm::length(g.material->GetShadowColor()) < 1e-3) {
+      g.material->SetShadowColor(shadowFactor * g.material->GetDiffuseColor());
+    }
+  }
+}
 }  // namespace
 
 namespace GLOO {
@@ -70,6 +84,7 @@ void ToonViewerApp::SetupScene() {
   if (model_filename_ != "") {
     MeshData mesh_data = MeshLoader::Import(model_filename_);
     SetAmbientToDiffuse(mesh_data);
+    SetNPRColorsFromDiffuse(mesh_data, 1.2, .5);
 
     std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
     // TODO: fix up materials
@@ -159,6 +174,12 @@ void ToonViewerApp::SetShadowColor(const glm::vec3& color) {
   }
 }
 
+void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor) {
+  for (auto node : outline_nodes_) {
+    node->OverrideNPRColorsFromDiffuse(illuminationFactor, shadowFactor);
+  }
+}
+
 void ToonViewerApp::DrawGUI() {
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   ImGui::Begin("Control Panel");
@@ -178,6 +199,9 @@ void ToonViewerApp::DrawGUI() {
   }
   if (ImGui::ColorEdit3("Shadow Color", &shadow_color_.front())) {
     SetShadowColor(vectorToVec3(shadow_color_));
+  }
+  if (ImGui::Button("Reset Shader Colors to Material Diffuse")) {
+    OverrideNPRColorsFromDiffuse(1.2, 0.5);
   }
   // Button for toggling between our shader types
   if (ImGui::Button("Toggle Toon/Tone Mapping Shader")) {

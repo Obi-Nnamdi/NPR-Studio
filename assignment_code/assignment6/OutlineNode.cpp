@@ -144,6 +144,20 @@ void OutlineNode::SetShadowColor(const glm::vec3& color) {
       std::make_shared<Material>(material));
 }
 
+void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor) {
+  auto material_component_ptr = mesh_node_->GetComponentPtr<MaterialComponent>();
+  const Material* material_ptr;
+  if (material_component_ptr == nullptr) {
+    material_ptr = &Material::GetDefault();
+  } else {
+    material_ptr = &material_component_ptr->GetMaterial();
+  }
+
+  auto diffuseColor = material_ptr->GetDiffuseColor();
+  SetIlluminatedColor(illuminationFactor * diffuseColor);
+  SetShadowColor(shadowFactor * diffuseColor);
+}
+
 void OutlineNode::CalculateFaceDirections() {
   // Get camera information
   auto camera_pointer = parent_scene_->GetActiveCameraPtr();
