@@ -59,7 +59,6 @@ void ToonShader::SetTargetNode(const SceneNode& node, const glm::mat4& model_mat
   // float y = .8;
   // glm::vec3 (0, 0, b);
   // glm::vec3 (y, y, 0);
-  // TODO: make high and low colors part of GLOO::Material
   SetUniform("material.shadow_color", material_ptr->GetShadowColor());
   SetUniform("material.illuminated_color", material_ptr->GetIlluminatedColor());
 }
