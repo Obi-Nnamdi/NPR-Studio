@@ -9,6 +9,7 @@
 #include "gloo/Scene.hpp"
 #include "gloo/SceneNode.hpp"
 #include "gloo/VertexObject.hpp"
+#include "gloo/shaders/OutlineShader.hpp"
 #include "gloo/shaders/ShaderProgram.hpp"
 
 namespace GLOO {
@@ -79,6 +80,7 @@ class OutlineNode : public SceneNode {
   void SetIlluminatedColor(const glm::vec3 &color);
   void SetShadowColor(const glm::vec3 &color);
   void OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor);
+  void SetOutlineThickness(const float &width);
 
  private:
   void SetupEdgeMaps();

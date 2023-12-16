@@ -10,6 +10,7 @@
 #include "gloo/components/RenderingComponent.hpp"
 #include "gloo/components/ShadingComponent.hpp"
 #include "gloo/debug/PrimitiveFactory.hpp"
+#include "gloo/shaders/OutlineShader.hpp"
 #include "gloo/shaders/SimpleShader.hpp"
 #include "gloo/shaders/ToneMappingShader.hpp"
 #include "gloo/shaders/ToonShader.hpp"
@@ -91,7 +92,8 @@ void OutlineNode::SetOutlineMesh() {
 void OutlineNode::DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader) {
   // Create new tone mapping shader if shader isn't specified
   mesh_shader_ = mesh_shader == nullptr ? std::make_shared<ToneMappingShader>() : mesh_shader;
-  outline_shader_ = std::make_shared<SimpleShader>();
+  // Create outline shader
+  outline_shader_ = std::make_shared<OutlineShader>();
   CreateComponent<ShadingComponent>(outline_shader_);
   auto& rc_node = CreateComponent<RenderingComponent>(outline_mesh_);
   rc_node.SetDrawMode(DrawMode::Lines);
@@ -99,6 +101,7 @@ void OutlineNode::DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader) {
   // Material (white color lines)
   auto mat = std::make_shared<Material>();
   mat->SetDiffuseColor(glm::vec3(1.));
+  mat->SetOutlineThickness(4);  // Default thickness
   CreateComponent<MaterialComponent>(mat);
 
   // Child Scene Node for actual mesh
@@ -149,6 +152,7 @@ void OutlineNode::SetShadowColor(const glm::vec3& color) {
 }
 
 void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor) {
+  // Use the diffuse color of the material we have to set its shadow and illumination color
   auto material_component_ptr = mesh_node_->GetComponentPtr<MaterialComponent>();
   const Material* material_ptr;
   if (material_component_ptr == nullptr) {
@@ -160,6 +164,13 @@ void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float s
   auto diffuseColor = material_ptr->GetDiffuseColor();
   SetIlluminatedColor(illuminationFactor * diffuseColor);
   SetShadowColor(shadowFactor * diffuseColor);
+}
+
+void OutlineNode::SetOutlineThickness(const float& width) {
+  // Update material with new outline width
+  auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
+  material.SetOutlineThickness(width);
+  GetComponentPtr<MaterialComponent>()->SetMaterial(std::make_shared<Material>(material));
 }
 
 void OutlineNode::CalculateFaceDirections() {

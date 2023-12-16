@@ -121,6 +121,12 @@ void ShaderProgram::SetUniform(const std::string& name,
   GL_CHECK(glUniform3fv(loc, 1, glm::value_ptr(value)));
 }
 
+void ShaderProgram::SetUniform(const std::string& name, const glm::vec2& value) const {
+  GLint loc = glGetUniformLocation(shader_program_, name.c_str());
+  GL_CHECK_ERROR();
+  GL_CHECK(glUniform2fv(loc, 1, glm::value_ptr(value)));
+}
+
 void ShaderProgram::SetUniform(const std::string& name, float value) const {
   GLint loc = glGetUniformLocation(shader_program_, name.c_str());
   GL_CHECK_ERROR();
