@@ -11,7 +11,7 @@ void main()
 {
     float r = u_thickness;
 
-    vec4 p1 = gl_in[0].gl_Position; // TODO: maybe mutliply by modelview projection matrix?
+    vec4 p1 = gl_in[0].gl_Position;
     vec4 p2 = gl_in[1].gl_Position;
 
     vec2 dir = normalize(p2.xy - p1.xy);

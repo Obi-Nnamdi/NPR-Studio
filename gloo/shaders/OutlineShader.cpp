@@ -17,7 +17,7 @@ OutlineShader::OutlineShader()
                                                             {GL_GEOMETRY_SHADER, "outline.geom"},
                                                             {GL_FRAGMENT_SHADER, "outline.frag"}}) {
 }
-
+// TODO: Use miter join method.
 void OutlineShader::AssociateVertexArray(VertexArray& vertex_array) const {
   // TODO: Add fancy vertex array and ssbo calculations here?
   if (!vertex_array.HasPositionBuffer()) {
