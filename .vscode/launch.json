@@ -11,6 +11,15 @@
             "program": "${workspaceFolder}/build/assignment6",
             "cwd": "${fileDirname}",
             "MIMode": "lldb"
+        },
+        {
+            "type": "cppdbg",
+            "request": "launch",
+            "name": "Debug MIT Text",
+            "program": "${workspaceFolder}/build/assignment6",
+            "args": ["mit_text.obj"],
+            "cwd": "${fileDirname}",
+            "MIMode": "lldb"
         }
     ]
 }

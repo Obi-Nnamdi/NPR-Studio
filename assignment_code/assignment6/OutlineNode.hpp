@@ -51,6 +51,7 @@ struct EdgeInfo {
 };
 
 enum ToonShadingType { TOON, TONE_MAPPING };
+enum OutlineMethod { STANDARD, MITER };
 
 /**
  * Class representing an object shaded with outlines.
@@ -81,6 +82,8 @@ class OutlineNode : public SceneNode {
   void SetShadowColor(const glm::vec3 &color);
   void OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor);
   void SetOutlineThickness(const float &width);
+  // Change outline method used to render outlines
+  void SetOutlineMethod(OutlineMethod method);
 
  private:
   void SetupEdgeMaps();
@@ -99,17 +102,21 @@ class OutlineNode : public SceneNode {
 
   std::shared_ptr<ShaderProgram> mesh_shader_;
   std::shared_ptr<ShaderProgram> outline_shader_;
+  std::shared_ptr<ShaderProgram> miter_outline_shader_;
 
   std::shared_ptr<VertexObject> mesh_;
   std::shared_ptr<VertexObject> outline_mesh_;
+  // TODO maybe make list of scene nodes?
+  std::vector<SceneNode *> edge_nodes_;
 
   SceneNode *mesh_node_;
 
   bool show_silhouette_edges_ = true;
   bool show_border_edges_ = true;
   bool show_crease_edges_ = true;
+  OutlineMethod outline_method_ = STANDARD;
 
-  const float line_bias_ = 0.001 / 2;
+  const float line_bias_ = 0.001 / 2;  // TODO maybe change this for miter joins?
   float crease_threshold_ = glm::radians(30.f);
   const Scene *parent_scene_;
 };

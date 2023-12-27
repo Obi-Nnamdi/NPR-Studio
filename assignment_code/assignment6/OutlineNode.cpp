@@ -2,6 +2,7 @@
 
 #include <glm/gtx/string_cast.hpp>
 
+#include "assignment_code/common/edgeutils.hpp"
 #include "assignment_code/common/helpers.hpp"
 #include "gloo/Material.hpp"
 #include "gloo/MeshLoader.hpp"
@@ -10,6 +11,7 @@
 #include "gloo/components/RenderingComponent.hpp"
 #include "gloo/components/ShadingComponent.hpp"
 #include "gloo/debug/PrimitiveFactory.hpp"
+#include "gloo/shaders/MiterOutlineShader.hpp"
 #include "gloo/shaders/OutlineShader.hpp"
 #include "gloo/shaders/SimpleShader.hpp"
 #include "gloo/shaders/ToneMappingShader.hpp"
@@ -21,6 +23,7 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
     : SceneNode(), parent_scene_(scene) {
   // Create things we need for rendering
   mesh_ = mesh == nullptr ? PrimitiveFactory::CreateCylinder(1.f, 1, 32) : mesh;
+  // TODO debug miter join stuff with CreateQuad();
 
   // Since our mesh is static, we only need to set the outline mesh's vertex positions once
   // (we'll change the indices a lot though).
@@ -29,6 +32,8 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   // Populate mesh with default material
   mesh_node_->CreateComponent<MaterialComponent>(
       std::make_shared<Material>(Material::GetDefaultNPR()));
+  // TODO: toggle to turn mesh node on and off?
+  // mesh_node_->SetActive(false);
 
   // Outline Specific Setup:
   SetupEdgeMaps();
@@ -64,6 +69,7 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   DoRenderSetup(mesh_shader);
   // Add the specific material we have to this mesh
   mesh_node_->CreateComponent<MaterialComponent>(mesh_material);
+  // mesh_node_->SetActive(false);
 
   // Outline Specific Setup:
   SetupEdgeMaps();
@@ -98,9 +104,12 @@ void OutlineNode::DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader) {
   auto& rc_node = CreateComponent<RenderingComponent>(outline_mesh_);
   rc_node.SetDrawMode(DrawMode::Lines);
 
+  // Create miter outline shader
+  miter_outline_shader_ = std::make_shared<MiterOutlineShader>();
+
   // Material (white color lines)
   auto mat = std::make_shared<Material>();
-  mat->SetDiffuseColor(glm::vec3(1.));
+  mat->SetDiffuseColor(glm::vec3(1.));  // white
   mat->SetOutlineThickness(4);  // Default thickness
   CreateComponent<MaterialComponent>(mat);
 
@@ -173,6 +182,8 @@ void OutlineNode::SetOutlineThickness(const float& width) {
   GetComponentPtr<MaterialComponent>()->SetMaterial(std::make_shared<Material>(material));
 }
 
+void OutlineNode::SetOutlineMethod(OutlineMethod method) { outline_method_ = method; }
+
 void OutlineNode::CalculateFaceDirections() {
   // Get camera information
   auto camera_pointer = parent_scene_->GetActiveCameraPtr();
@@ -188,16 +199,28 @@ void OutlineNode::CalculateFaceDirections() {
 }
 
 void OutlineNode::Update(double delta_time) {
+  // Reset edge nodes
+  // TODO: you can do better here but for now this is fine
+  for (auto& edgeNode : edge_nodes_) {
+    edgeNode->SetActive(false);
+    // edgeNode->~SceneNode();
+  }
+  // TODO: child count keeps going up
+  // TODO: Reuse Edge Nodes
+  // std::cout << "Children: " << GetChildrenCount() << std::endl;
+  // edge_nodes_.clear();
   // On each frame, recaclulate the silhouette edges and draw all update edges
   // Only recalculate silhouette edges when we're displaying them
   if (show_silhouette_edges_) {
     ComputeSilhouetteEdges();
   }
+  // TODO: change method signature (remove parameters)
   RenderEdges(show_silhouette_edges_, show_border_edges_, show_crease_edges_);
 }
 
 void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
   auto newIndices = make_unique<IndexArray>();
+  auto renderedEdges = std::vector<Edge>();
 
   // Only iterate through our edges if we're going to draw any of them
   if (silhouette || border || crease) {
@@ -207,10 +230,88 @@ void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
       // Only draw edges that we allow
       if ((info.is_silhouette && silhouette) || (info.is_border && border) ||
           (info.is_crease && crease)) {
-        newIndices->push_back(edge.first);
-        newIndices->push_back(edge.second);
+        // TODO: toggle between rendering with miter joins and "fast" edge rendering
+        if (outline_method_ == OutlineMethod::STANDARD) {
+          newIndices->push_back(edge.first);
+          newIndices->push_back(edge.second);
+        } else if (outline_method_ == OutlineMethod::MITER) {
+          // TODO: maybe render edges in passes?
+          renderedEdges.push_back(edge);  // record edge for polyline drawing purposes
+        }
       }
     }
+  }
+  // Polyline stuff
+  auto polylines = edgesToPolylines(renderedEdges);
+  auto& positions = outline_mesh_->GetPositions();
+  auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
+  // std::cout << "Num Polylines: " << polylines.size() << std::endl;
+  for (int i = 0; i < polylines.size(); ++i) {
+    // TODO turn into their own node class
+    auto& polyline = polylines[i];
+    // Reuse edge nodes if we can
+    SceneNode* edgeNode;
+    if (edge_nodes_.size() > i) {
+      edgeNode = edge_nodes_[i];
+      edgeNode->SetActive(true);
+    } else {
+      // Make a new edge node if we don't have enough
+      auto newEdgeNode = make_unique<SceneNode>();
+      edgeNode = newEdgeNode.get();
+      edge_nodes_.push_back(newEdgeNode.get());
+      AddChild(std::move(newEdgeNode));
+    }
+    // TODO create vertex object for outlines
+    // TODO 2-length paths don't show up!
+    // (They do if you treat them as loops in edgeutils)
+    // TODO: switch between miter join rendering and regular edge rendering based on path length
+    // (i.e. don't do it for 2-length things)
+    // TODO increase edge bias
+    // Define the polyline size. If the polyline is a loop, there's technically another point from
+    // the back to the front that wasn't incldued, making the polyline one vertex longer.
+    auto polylineSize = polyline.is_loop ? polyline.path.size() + 1 : polyline.path.size();
+    auto numVertices = 6 * (polylineSize - 1);
+    // // Create indices for polyline
+    auto polyLineIndices = make_unique<IndexArray>();
+    for (int i = 0; i < numVertices; ++i) {
+      polyLineIndices->push_back(i);
+    }
+    // Create positions for polyline, adding extra vertices to head or tail if the polyline is a
+    // loop
+    auto firstElt = polyline.path.front();
+    auto lastElt = polyline.path.back();
+    if (polyline.is_loop) {
+      auto secondElt = polyline.path[1];
+      // Add first elt to the end, followed by the element immediately after it.
+      polyline.path.push_back(firstElt);
+      polyline.path.push_back(secondElt);
+      // Add last element to the beginning
+      polyline.path.insert(polyline.path.begin(), lastElt);
+    } else {
+      // Otherwise, just add the first element to the beginning and last element to the end
+      polyline.path.push_back(lastElt);
+      polyline.path.insert(polyline.path.begin(), firstElt);
+    }
+    auto polylinePositions = make_unique<PositionArray>();
+    for (auto& index : polyline.path) {
+      polylinePositions->push_back(positions[index]);
+    }
+    std::shared_ptr<VertexObject> polylineMesh = std::make_shared<VertexObject>();
+    polylineMesh->UpdatePositions(std::move(polylinePositions));
+    polylineMesh->UpdateIndices(std::move(polyLineIndices));
+
+    edgeNode->CreateComponent<MaterialComponent>(std::make_shared<Material>(material));
+    edgeNode->CreateComponent<ShadingComponent>(miter_outline_shader_);
+    edgeNode->CreateComponent<RenderingComponent>(polylineMesh);
+
+    // Print polyline information
+    // std::cout << "Polyline: ";
+    // for (size_t node : polyline.path) {
+    //   std::cout << node << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "Loop: " << (polyline.is_loop ? "True" : "False");
+    // std::cout << std::endl;
   }
   outline_mesh_->UpdateIndices(std::move(newIndices));
 }

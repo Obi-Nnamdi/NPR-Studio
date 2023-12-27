@@ -170,6 +170,13 @@ void ToonViewerApp::UpdateOutlineThickness() {
   }
 }
 
+void ToonViewerApp::UpdateOutlineMethod() {
+  OutlineMethod outlineMethod = useMiterJoins ? OutlineMethod::MITER : OutlineMethod::STANDARD;
+  for (auto node : outline_nodes_) {
+    node->SetOutlineMethod(outlineMethod);
+  }
+}
+
 void ToonViewerApp::SetIlluminatedColor(const glm::vec3& color) {
   for (auto node : outline_nodes_) {
     node->SetIlluminatedColor(color);
@@ -218,6 +225,9 @@ void ToonViewerApp::DrawGUI() {
 
   // Checkboxes for toggling edge type displays
   ImGui::Text("Edge Controls:");
+  if (ImGui::Checkbox("Use Miter Join Method (slow/experimental)", &useMiterJoins)) {
+    UpdateOutlineMethod();
+  }
   ImGui::Text("Edge Width:");
   if (ImGui::SliderFloat("Pixels", &outline_thickness_, 0, 100, "%.1f")) {
     UpdateOutlineThickness();
