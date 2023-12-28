@@ -187,14 +187,16 @@ void OutlineNode::SetMeshVisibility(bool visible) { mesh_node_->SetActive(visibl
 void OutlineNode::CalculateFaceDirections() {
   // Get camera information
   auto camera_pointer = parent_scene_->GetActiveCameraPtr();
-  glm::vec3 camera_position =
-      glm::vec3(glm::inverse(camera_pointer->GetViewMatrix()) * glm::vec4(0, 0, 0, 1.0));
-  glm::vec3 world_position = GetTransform().GetWorldPosition();
-  glm::vec3 camera_direction = camera_position - world_position;
+  //  Get global camera direction by transforming its "z" vector into global coordinates
+  glm::vec3 global_camera_direction =
+      glm::vec3(glm::inverse(camera_pointer->GetViewMatrix()) * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
 
+  // Transform global camera direction into object coordinates
+  glm::vec3 local_camera_direction = glm::inverse(GetTransform().GetLocalToWorldMatrix()) *
+                                     glm::vec4(global_camera_direction, 0.0f);
   // Iterate through faces and calculate if they're pointing towards or away the camera
   for (auto face : faces_) {
-    face->front_facing = glm::dot(face->normal, camera_direction) >= 0;
+    face->front_facing = glm::dot(face->normal, local_camera_direction) >= 0;
   }
 }
 
