@@ -84,6 +84,8 @@ class OutlineNode : public SceneNode {
   void SetOutlineThickness(const float &width);
   // Change outline method used to render outlines
   void SetOutlineMethod(OutlineMethod method);
+  // Set mesh visibilty
+  void SetMeshVisibility(bool visible);
 
  private:
   void SetupEdgeMaps();

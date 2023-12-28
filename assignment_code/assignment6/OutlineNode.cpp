@@ -184,6 +184,8 @@ void OutlineNode::SetOutlineThickness(const float& width) {
 
 void OutlineNode::SetOutlineMethod(OutlineMethod method) { outline_method_ = method; }
 
+void OutlineNode::SetMeshVisibility(bool visible) { mesh_node_->SetActive(visible); }
+
 void OutlineNode::CalculateFaceDirections() {
   // Get camera information
   auto camera_pointer = parent_scene_->GetActiveCameraPtr();
@@ -230,7 +232,7 @@ void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
       // Only draw edges that we allow
       if ((info.is_silhouette && silhouette) || (info.is_border && border) ||
           (info.is_crease && crease)) {
-        // TODO: toggle between rendering with miter joins and "fast" edge rendering
+        // Toggle between rendering with miter joins and "fast" edge rendering
         if (outline_method_ == OutlineMethod::STANDARD) {
           newIndices->push_back(edge.first);
           newIndices->push_back(edge.second);

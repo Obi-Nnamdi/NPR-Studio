@@ -177,6 +177,12 @@ void ToonViewerApp::UpdateOutlineMethod() {
   }
 }
 
+void ToonViewerApp::UpdateMeshVisibility() {
+  for (auto node : outline_nodes_) {
+    node->SetMeshVisibility(showMesh);
+  }
+}
+
 void ToonViewerApp::SetIlluminatedColor(const glm::vec3& color) {
   for (auto node : outline_nodes_) {
     node->SetIlluminatedColor(color);
@@ -248,6 +254,10 @@ void ToonViewerApp::DrawGUI() {
   // TODO: should this go to 360?
   if (ImGui::SliderFloat("Degrees", &crease_threshold_, 0, 180, "%.1f")) {
     UpdateCreaseThreshold();
+  }
+  ImGui::Text("Mesh Controls:");
+  if (ImGui::Checkbox("Show Mesh", &showMesh)) {
+    UpdateMeshVisibility();
   }
 
   ImGui::End();
