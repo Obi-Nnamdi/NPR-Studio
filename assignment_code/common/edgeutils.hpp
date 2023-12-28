@@ -27,6 +27,8 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
 
   int counter = 0;
   for (size_t neighbor : adjList.at(node)) {
+    // TODO: if we have multiple neighbors, find a way to combine the paths produced by all of them
+    // together somehow
     if (visited.find(neighbor) == visited.end()) {
       dfs(neighbor, adjList, visited, currentPath, longestPath, paths);
       counter++;

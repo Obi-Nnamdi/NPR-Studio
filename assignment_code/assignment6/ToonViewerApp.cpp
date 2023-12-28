@@ -89,7 +89,6 @@ void ToonViewerApp::SetupScene() {
     SetNPRColorsFromDiffuse(mesh_data, 1.2, .5);
 
     std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
-    // TODO: fix up materials
 
     if (mesh_data.groups.size() == 0) {
       // load full model at once

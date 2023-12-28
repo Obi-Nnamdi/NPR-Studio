@@ -97,7 +97,7 @@ class OutlineNode : public SceneNode {
   void DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
 
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
-  void RenderEdges(bool silhouette = true, bool border = true, bool crease = true);
+  void RenderEdges();
   std::unordered_map<Edge, std::vector<std::shared_ptr<Face>>, pairhash, KeyEqual> edge_face_map_;
   std::unordered_map<Edge, EdgeInfo, pairhash, KeyEqual> edge_info_map_;
   std::vector<std::shared_ptr<Face>> faces_;
@@ -108,7 +108,6 @@ class OutlineNode : public SceneNode {
 
   std::shared_ptr<VertexObject> mesh_;
   std::shared_ptr<VertexObject> outline_mesh_;
-  // TODO maybe make list of scene nodes?
   std::vector<SceneNode *> edge_nodes_;
 
   SceneNode *mesh_node_;

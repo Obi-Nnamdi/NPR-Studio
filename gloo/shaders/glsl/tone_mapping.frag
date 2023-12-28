@@ -48,8 +48,8 @@ void main() {
     vec3 view_dir = normalize(camera_position - world_position);
 
     frag_color = vec4(0.0);
-    // TODO: test difference between performing tone mapping in individual light calculations 
-    // vs as a simple mix in final color
+    // TODO (large): refactor rendering pipeline to allow for all lights to be rendered at once, so 
+    // general tone mapping can work with multiple lights
 
     if (ambient_light.enabled) {
         frag_color += vec4(CalcAmbientLight(), 1.0);
@@ -97,10 +97,6 @@ vec3 CalcAmbientLight() {
 vec3 CalcPointLight(vec3 normal, vec3 view_dir) {
     PointLight light = point_light;
     vec3 light_dir = normalize(light.position - world_position);
-    // TODO: handle tone mapping for point lights (and multiple lights in general lol)
-    // Replace `GetDiffuseColor` here for tone mapping (between cool and warm color)
-    // Try multiple options for getting point lights to work lol, the goal is to keep 
-    // the final illumination the same b/t 
 
     float distance = length(light.position - world_position);
     float attenuation = 1.0 / (light.attenuation.x + 
@@ -118,12 +114,11 @@ vec3 CalcDirectionalLight(vec3 normal, vec3 view_dir) {
     // Shade using Tone Mapping
     vec3 light_dir = normalize(-directional_light.direction);
     float lambertian_term = dot(normal, light_dir); // from [-1, 1]
-    // TODO Delete this:
-    // float color_mix_factor = step(0.5, (1 + lambertian_term) / 2); // from [0, 1]
     float color_mix_factor =(1 + lambertian_term) / 2; // from [0, 1]
     // Tone mapping equation. Adapted from Gooch et al. (1998):
-    // TODO: try both (they're the same)
-    // vec3 tone_color = mix(GetLowColor(), GetHighColor(), color_mix_factor);
+    
+    // Use color mix factor to mix between high and low color:
+    // vec3 tone_color = mix(GetLowColor(), GetHighColor(), color_mix_factor); // alternative strategy
     vec3 tone_color = color_mix_factor * GetHighColor() + (1 - color_mix_factor) * GetLowColor();
 
     return tone_color;

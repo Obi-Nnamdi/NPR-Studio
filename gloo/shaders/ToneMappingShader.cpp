@@ -68,8 +68,8 @@ void ToneMappingShader::SetTargetNode(const SceneNode& node, const glm::mat4& mo
 void ToneMappingShader::SetCamera(const CameraComponent& camera) const {
   SetUniform("view_matrix", camera.GetViewMatrix());
   SetUniform("projection_matrix", camera.GetProjectionMatrix());
-  // TODO: change camera position calculation to be in line with Piazza post?
-  SetUniform("camera_position", camera.GetNodePtr()->GetTransform().GetWorldPosition());
+  SetUniform("camera_position",
+             glm::vec3(glm::inverse(camera.GetViewMatrix()) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)));
 }
 
 void ToneMappingShader::SetLightSource(const LightComponent& component) const {

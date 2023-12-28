@@ -32,8 +32,6 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   // Populate mesh with default material
   mesh_node_->CreateComponent<MaterialComponent>(
       std::make_shared<Material>(Material::GetDefaultNPR()));
-  // TODO: toggle to turn mesh node on and off?
-  // mesh_node_->SetActive(false);
 
   // Outline Specific Setup:
   SetupEdgeMaps();
@@ -201,37 +199,33 @@ void OutlineNode::CalculateFaceDirections() {
 }
 
 void OutlineNode::Update(double delta_time) {
-  // Reset edge nodes
+  // Reset Polyline edge nodes
   // TODO: you can do better here but for now this is fine
   for (auto& edgeNode : edge_nodes_) {
     edgeNode->SetActive(false);
     // edgeNode->~SceneNode();
   }
-  // TODO: child count keeps going up
-  // TODO: Reuse Edge Nodes
   // std::cout << "Children: " << GetChildrenCount() << std::endl;
-  // edge_nodes_.clear();
   // On each frame, recaclulate the silhouette edges and draw all update edges
   // Only recalculate silhouette edges when we're displaying them
   if (show_silhouette_edges_) {
     ComputeSilhouetteEdges();
   }
-  // TODO: change method signature (remove parameters)
-  RenderEdges(show_silhouette_edges_, show_border_edges_, show_crease_edges_);
+  RenderEdges();
 }
 
-void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
+void OutlineNode::RenderEdges() {
   auto newIndices = make_unique<IndexArray>();
   auto renderedEdges = std::vector<Edge>();
 
   // Only iterate through our edges if we're going to draw any of them
-  if (silhouette || border || crease) {
+  if (show_silhouette_edges_ || show_border_edges_ || show_crease_edges_) {
     for (const auto& item : edge_info_map_) {
       Edge edge = item.first;
       EdgeInfo info = item.second;
       // Only draw edges that we allow
-      if ((info.is_silhouette && silhouette) || (info.is_border && border) ||
-          (info.is_crease && crease)) {
+      if ((info.is_silhouette && show_silhouette_edges_) ||
+          (info.is_border && show_border_edges_) || (info.is_crease && show_crease_edges_)) {
         // Toggle between rendering with miter joins and "fast" edge rendering
         if (outline_method_ == OutlineMethod::STANDARD) {
           newIndices->push_back(edge.first);
@@ -263,7 +257,6 @@ void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
       edge_nodes_.push_back(newEdgeNode.get());
       AddChild(std::move(newEdgeNode));
     }
-    // TODO create vertex object for outlines
     // TODO 2-length paths don't show up!
     // (They do if you treat them as loops in edgeutils)
     // TODO: switch between miter join rendering and regular edge rendering based on path length
@@ -273,7 +266,7 @@ void OutlineNode::RenderEdges(bool silhouette, bool border, bool crease) {
     // the back to the front that wasn't incldued, making the polyline one vertex longer.
     auto polylineSize = polyline.is_loop ? polyline.path.size() + 1 : polyline.path.size();
     auto numVertices = 6 * (polylineSize - 1);
-    // // Create indices for polyline
+    // Create indices for polyline
     auto polyLineIndices = make_unique<IndexArray>();
     for (int i = 0; i < numVertices; ++i) {
       polyLineIndices->push_back(i);

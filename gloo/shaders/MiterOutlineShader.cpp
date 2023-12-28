@@ -19,7 +19,6 @@ MiterOutlineShader::MiterOutlineShader()
 }
 
 void MiterOutlineShader::AssociateVertexArray(VertexArray& vertex_array) const {
-  // TODO: Add fancy vertex array and ssbo calculations here?
   if (!vertex_array.HasPositionBuffer()) {
     throw std::runtime_error("Outline shader requires vertex positions!");
   }
@@ -82,7 +81,6 @@ GLuint MiterOutlineShader::CreateUBO() const {
   GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo));
 
   return ubo;
-  // TODO: delete UBO data?
 }
 
 void MiterOutlineShader::UpdateUBO(const std::vector<glm::vec3>& varray) const {
