@@ -67,9 +67,14 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
  * the resulting `paths` array.
  *
  * @param paths: The vector of polylines to be split.
- * @param max_size: The maximum size of a polyline.
+ * @param max_size: The maximum size of a polyline. Must be > 0.
  */
 void splitPolylines(std::vector<Polyline>& paths, int max_size) {
+  // Enforce precondition
+  if (max_size <= 0) {
+    throw std::runtime_error("max_size must be > 0");
+  }
+
   for (auto& polyline : paths) {
     if (polyline.path.size() > max_size) {
       int num_splits = polyline.path.size() / max_size;
@@ -81,6 +86,13 @@ void splitPolylines(std::vector<Polyline>& paths, int max_size) {
         // If no splits were necessary, just use the existing loop parameter.
         new_polyline.is_loop = num_splits > 0 ? false : polyline.is_loop;
         paths.push_back(new_polyline);
+        // Also add mini-polyline that connects the two polylines we just split ()
+        if (polyline.path.size() > (i + 1) * max_size) {
+          Polyline mini_polyline;
+          mini_polyline.path = {new_polyline.path.back(), polyline.path[(i + 1) * max_size]};
+          mini_polyline.is_loop = true;  // it's a loop by definition.
+          paths.push_back(mini_polyline);
+        }
       }
       polyline.path =
           std::vector<size_t>(polyline.path.begin() + num_splits * max_size, polyline.path.end());
@@ -120,6 +132,7 @@ std::vector<Polyline> edgesToPolylines(const std::vector<Edge>& edges) {
 
   // Split polylines into paths less than the maximum UBO array size defined in MiterOutlineShader.
   // (prevents seg faulting when rendering)
+  // TODO: the sponza_low scene doesn't display anything when using this techniuque
   int splitLength = (int)maxUBOArraySize - 10;
   if (splitLength <= 0) {
     throw std::runtime_error("Polyline split length <= 0. Adjust maxUBOArraySize");
