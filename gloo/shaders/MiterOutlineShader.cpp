@@ -31,11 +31,8 @@ MiterOutlineShader::~MiterOutlineShader() {
 }
 
 void MiterOutlineShader::SetTargetNode(const SceneNode& node, const glm::mat4& model_matrix) const {
-  // Associate the right VAO before rendering.
-  //   std::cout << "Associating!" << std::endl;
   // Create a UBO from the vertex positions before rendering
   UpdateUBO(node.GetComponentPtr<RenderingComponent>()->GetVertexObjectPtr()->GetPositions());
-  //   std::cout << "Finished Associating, ubo is " << vertex_ubo_ << std::endl;
 
   // Set transform.
   SetUniform("model_matrix", model_matrix);
@@ -77,8 +74,8 @@ GLuint MiterOutlineShader::CreateUBO() const {
                         sizeof(VertexInfo) + (maxUBOArraySize - 1) * sizeof(glm::vec4), NULL,
                         GL_STATIC_DRAW));
 
-  // Bind the UBO to a binding point (you can choose any binding point)
-  GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo));
+  // Bind the UBO to a binding point (here we choose 0)
+  GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, buffer_binding_point_, ubo));
 
   return ubo;
 }
@@ -87,16 +84,15 @@ void MiterOutlineShader::UpdateUBO(const std::vector<glm::vec3>& varray) const {
   GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, vertex_ubo_));
   // Set the data for the UBO
   VertexInfo uboData;
-  //   uboData.arraySize = varray.size();  // Set the actual array size
 
   // Populate the array with data
   for (int i = 0; i < varray.size(); ++i) {
     uboData.myVec4Array[i] = glm::vec4(varray[i], 1.0f);
-    // std::cout << "uboData at " << i << ":" << glm::to_string(uboData.myVec4Array[i]);
   }
 
   // Update UBO data
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(VertexInfo), &uboData);
+  GLintptr offset = 0;  // no data offset
+  glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(VertexInfo), &uboData);
 }
 
 }  // namespace GLOO

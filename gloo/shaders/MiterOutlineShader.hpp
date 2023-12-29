@@ -24,6 +24,7 @@ class MiterOutlineShader : public ShaderProgram {
   GLuint CreateUBO() const;
   void UpdateUBO(const std::vector<glm::vec3>& varray) const;
   GLuint vertex_ubo_;
+  GLuint buffer_binding_point_ = 0;
 };
 
 }  // namespace GLOO
