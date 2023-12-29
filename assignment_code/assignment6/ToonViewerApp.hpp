@@ -34,7 +34,8 @@ class ToonViewerApp : public Application {
   void SetShadowColor(const glm::vec3& color);
   void SetOutlineColor(const glm::vec3& color);
 
-  void OverrideNPRColorsFromDiffuse(float illuminationFactor = 1.5, float shadowFactor = .5);
+  void OverrideNPRColorsFromDiffuse(float illuminationFactor = 1.5, float shadowFactor = .5,
+                                    float outlineFactor = 1);
 
   bool showSilhouette = true;
   bool showCrease = true;

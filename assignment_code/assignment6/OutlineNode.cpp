@@ -67,7 +67,8 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   DoRenderSetup(mesh_shader);
   // Add the specific material we have to this mesh
   mesh_node_->CreateComponent<MaterialComponent>(mesh_material);
-  // mesh_node_->SetActive(false);
+  // reuse the edge color from the material we imported
+  SetOutlineColor(mesh_material->GetOutlineColor());
 
   // Outline Specific Setup:
   SetupEdgeMaps();
@@ -105,11 +106,8 @@ void OutlineNode::DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader) {
   // Create miter outline shader
   miter_outline_shader_ = std::make_shared<MiterOutlineShader>();
 
-  // Material (white color lines)
-  auto mat = std::make_shared<Material>();
-  mat->SetDiffuseColor(glm::vec3(1.));  // white
-  mat->SetOutlineThickness(4);  // Default thickness
-  CreateComponent<MaterialComponent>(mat);
+  // Outline Material (default NPR)
+  CreateComponent<MaterialComponent>(std::make_shared<Material>(Material::GetDefaultNPR()));
 
   // Child Scene Node for actual mesh
   auto meshNode = make_unique<SceneNode>();
@@ -164,7 +162,8 @@ void OutlineNode::SetOutlineColor(const glm::vec3& color) {
   GetComponentPtr<MaterialComponent>()->SetMaterial(std::make_shared<Material>(material));
 }
 
-void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor) {
+void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor,
+                                               float outlineFactor) {
   // Use the diffuse color of the material we have to set its shadow and illumination color
   auto material_component_ptr = mesh_node_->GetComponentPtr<MaterialComponent>();
   const Material* material_ptr;
@@ -177,6 +176,7 @@ void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float s
   auto diffuseColor = material_ptr->GetDiffuseColor();
   SetIlluminatedColor(illuminationFactor * diffuseColor);
   SetShadowColor(shadowFactor * diffuseColor);
+  SetOutlineColor(outlineFactor * diffuseColor);
 }
 
 void OutlineNode::SetOutlineThickness(const float& width) {

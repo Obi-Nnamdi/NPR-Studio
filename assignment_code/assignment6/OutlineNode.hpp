@@ -81,7 +81,8 @@ class OutlineNode : public SceneNode {
   void SetIlluminatedColor(const glm::vec3 &color);
   void SetShadowColor(const glm::vec3 &color);
   void SetOutlineColor(const glm::vec3 &color);
-  void OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor);
+  void OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor,
+                                    float outlineFactor);
   void SetOutlineThickness(const float &width);
   // Change outline method used to render outlines
   void SetOutlineMethod(OutlineMethod method);

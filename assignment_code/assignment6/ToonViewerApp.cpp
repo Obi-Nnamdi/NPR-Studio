@@ -34,16 +34,23 @@ void SetAmbientToDiffuse(GLOO::MeshData& mesh_data) {
   }
 }
 
+// TODO: delete this fucntion and just use the override NPR colors from diffuse one.
 void SetNPRColorsFromDiffuse(GLOO::MeshData& mesh_data, float illuminationFactor = 1.5,
-                             float shadowFactor = .5) {
+                             float shadowFactor = .5, float outlineFactor = 1) {
   // For groups that don't have shadow/illuminated colors, we use their diffuse color * 1.5 as the
   // illuminated color, and the diffuse color * .5 as the shadow color.
+  // For groups with no edge color, we use a darker version of the shadow color.
   for (auto& g : mesh_data.groups) {
+    auto diffuse_color = g.material->GetDiffuseColor();
+    // TODO: maybe replace with default NPR material if diffuse isn't large enough?
     if (glm::length(g.material->GetIlluminatedColor()) < 1e-3) {
-      g.material->SetIlluminatedColor(illuminationFactor * g.material->GetDiffuseColor());
+      g.material->SetIlluminatedColor(illuminationFactor * diffuse_color);
     }
     if (glm::length(g.material->GetShadowColor()) < 1e-3) {
-      g.material->SetShadowColor(shadowFactor * g.material->GetDiffuseColor());
+      g.material->SetShadowColor(shadowFactor * diffuse_color);
+    }
+    if (glm::length(g.material->GetOutlineColor()) < 1e-3) {
+      g.material->SetOutlineColor(outlineFactor * diffuse_color);
     }
   }
 }
@@ -87,7 +94,7 @@ void ToonViewerApp::SetupScene() {
   if (model_filename_ != "") {
     MeshData mesh_data = MeshLoader::Import(model_filename_);
     SetAmbientToDiffuse(mesh_data);
-    SetNPRColorsFromDiffuse(mesh_data, 1.2, .5);
+    SetNPRColorsFromDiffuse(mesh_data, 1.2, .5, 1);
 
     std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
 
@@ -201,9 +208,10 @@ void ToonViewerApp::SetOutlineColor(const glm::vec3& color) {
   }
 }
 
-void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor) {
+void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor,
+                                                 float outlineFactor) {
   for (auto node : outline_nodes_) {
-    node->OverrideNPRColorsFromDiffuse(illuminationFactor, shadowFactor);
+    node->OverrideNPRColorsFromDiffuse(illuminationFactor, shadowFactor, outlineFactor);
   }
 }
 
