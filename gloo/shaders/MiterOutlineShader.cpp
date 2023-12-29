@@ -93,6 +93,7 @@ void MiterOutlineShader::UpdateUBO(const std::vector<glm::vec3>& varray) const {
   // Update UBO data
   GLintptr offset = 0;  // no data offset
   glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(VertexInfo), &uboData);
+  GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, buffer_binding_point_, vertex_ubo_));
 }
 
 }  // namespace GLOO
