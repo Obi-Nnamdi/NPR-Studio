@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../assignment6/OutlineNode.hpp"
+#include "../code/gloo/shaders/MiterOutlineShader.hpp"
 
 namespace GLOO {
 
@@ -62,6 +63,32 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
 }
 
 /**
+ * Splits polylines in `paths` into new ones, ensuring that no polylines over max_size are left in
+ * the resulting `paths` array.
+ *
+ * @param paths: The vector of polylines to be split.
+ * @param max_size: The maximum size of a polyline.
+ */
+void splitPolylines(std::vector<Polyline>& paths, int max_size) {
+  for (auto& polyline : paths) {
+    if (polyline.path.size() > max_size) {
+      int num_splits = polyline.path.size() / max_size;
+      for (int i = 0; i < num_splits; i++) {
+        Polyline new_polyline;
+        new_polyline.path = std::vector<size_t>(polyline.path.begin() + i * max_size,
+                                                polyline.path.begin() + (i + 1) * max_size);
+        // If the polyline needed to have more than one split, then it's not a loop by definition.
+        // If no splits were necessary, just use the existing loop parameter.
+        new_polyline.is_loop = num_splits > 0 ? false : polyline.is_loop;
+        paths.push_back(new_polyline);
+      }
+      polyline.path =
+          std::vector<size_t>(polyline.path.begin() + num_splits * max_size, polyline.path.end());
+    }
+  }
+}
+
+/**
  * Function to transform edges to polylines. A polyline is a consecutive list of vertices that
  * traverse a "chain" of connected vertices in a graph. Every vertex is guaranteed to be represented
  * at aleast once in the list of polylines. Unfortunately, there's no guarantee that the polylines
@@ -91,13 +118,13 @@ std::vector<Polyline> edgesToPolylines(const std::vector<Edge>& edges) {
     }
   }
 
-  // for (const auto& path : paths) {
-  //   std::cout << "Path: ";
-  //   for (size_t node : path) {
-  //     std::cout << node << " ";
-  //   }
-  //   std::cout << std::endl;
-  // }
+  // Split polylines into paths less than the maximum UBO array size defined in MiterOutlineShader.
+  // (prevents seg faulting when rendering)
+  int splitLength = (int)maxUBOArraySize - 10;
+  if (splitLength <= 0) {
+    throw std::runtime_error("Polyline split length <= 0. Adjust maxUBOArraySize");
+  }
+  splitPolylines(paths, splitLength);
 
   return paths;
 }
