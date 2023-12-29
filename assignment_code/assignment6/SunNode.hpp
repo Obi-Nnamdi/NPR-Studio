@@ -12,6 +12,9 @@ class SunNode : public SceneNode {
 
   void Update(double delta_time) override;
   void ToggleLight();  // switches between directional "full" light and point light
+  void SetRadius(float radius);
+  // Intensity is a value between 0 and 1
+  void SetIntensity(float intensity);
 
  private:
   void UpdateSun(const glm::vec3& eye, const glm::vec3& direction);

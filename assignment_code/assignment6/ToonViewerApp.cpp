@@ -224,6 +224,12 @@ void ToonViewerApp::DrawGUI() {
     sun_node_->ToggleLight();
   }
 
+  ImGui::Text("Point Light Controls:");
+  // Slider for changing light radius
+  if (ImGui::SliderFloat("Light Radius", &point_light_radius_, 0, 30, "%.2f")) {
+    sun_node_->SetRadius(point_light_radius_);
+  }
+
   ImGui::Text("Shader Controls:");
   // Controls background color of our scene
   if (ImGui::ColorEdit4("Background Color", &background_color_.front())) {

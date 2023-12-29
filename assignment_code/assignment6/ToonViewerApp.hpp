@@ -45,6 +45,7 @@ class ToonViewerApp : public Application {
 
   float crease_threshold_ = 30;  // in degrees
   float outline_thickness_ = 4;  // in pixels
+  float point_light_radius_ = 1 / .15;
   std::vector<float> background_color_;  // rbga 4-vector list of background color
   std::vector<float> illumination_color_;
   std::vector<float> shadow_color_;

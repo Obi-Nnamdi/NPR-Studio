@@ -35,6 +35,15 @@ void SunNode::ToggleLight() {
   }
 }
 
+void SunNode::SetRadius(float radius) { point_light_->SetAttenuation(glm::vec3(1 / radius)); }
+
+void SunNode::SetIntensity(float intensity) {
+  directional_light_->SetDiffuseColor(glm::vec3(intensity));
+  directional_light_->SetSpecularColor(glm::vec3(intensity));
+  point_light_->SetDiffuseColor(glm::vec3(intensity));
+  point_light_->SetSpecularColor(glm::vec3(intensity));
+}
+
 void SunNode::Update(double delta_time) {
   time_elapsed_ += delta_time;
   glm::vec3 light_dir(2.0f * sinf((float)time_elapsed_ * 1.5f * 0.1f), 5.0f,

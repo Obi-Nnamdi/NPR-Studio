@@ -132,7 +132,8 @@ std::vector<Polyline> edgesToPolylines(const std::vector<Edge>& edges) {
 
   // Split polylines into paths less than the maximum UBO array size defined in MiterOutlineShader.
   // (prevents seg faulting when rendering)
-  // TODO: the sponza_low scene doesn't display anything when using this techniuque
+  // TODO: the sponza_low scene still errors when rendering a lot of lines due to a std::length
+  // error.
   int splitLength = (int)maxUBOArraySize - 10;
   if (splitLength <= 0) {
     throw std::runtime_error("Polyline split length <= 0. Adjust maxUBOArraySize");
