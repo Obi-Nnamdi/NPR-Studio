@@ -44,7 +44,7 @@ void MiterOutlineShader::SetTargetNode(const SceneNode& node, const glm::mat4& m
     SetUniform("material_color", glm::vec3(1.f));
     SetUniform("u_thickness", 20.f);
   } else {
-    SetUniform("material_color", material_component_ptr->GetMaterial().GetDiffuseColor());
+    SetUniform("material_color", material_component_ptr->GetMaterial().GetOutlineColor());
     SetUniform("u_thickness", material_component_ptr->GetMaterial().GetOutlineThickness());
   }
 }

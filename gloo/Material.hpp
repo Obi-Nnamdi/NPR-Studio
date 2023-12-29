@@ -15,6 +15,7 @@ class Material {
         shininess_(0.0f),
         illuminated_color_(0.0f),
         shadow_color_(0.0f),
+        outline_color_(0.0f),
         outline_thickness_(0.0f) {}
 
   // Realistic Material Constructor
@@ -25,16 +26,20 @@ class Material {
         specular_color_(specular_color),
         shininess_(shininess),
         illuminated_color_(0.0f),
-        shadow_color_(0.0f) {}
+        shadow_color_(0.0f),
+        outline_color_(0.0f),
+        outline_thickness_(0.0f) {}
 
-  // NPR Material Constructor
+  // NPR Material Constructor (arguments are weird because of the realistic material constructor
+  // already existing)
   Material(const glm::vec3& illuminated_color, const glm::vec3& shadow_color,
-           const float& outline_thickness)
+           const float& outline_thickness, const glm::vec3& outline_color)
       : ambient_color_(0.0f),
         diffuse_color_(0.0f),
         specular_color_(0.0f),
         illuminated_color_(illuminated_color),
         shadow_color_(shadow_color),
+        outline_color_(outline_color),
         outline_thickness_(outline_thickness) {}
 
   static const Material& GetDefault() {
@@ -45,7 +50,7 @@ class Material {
   }
 
   static const Material& GetDefaultNPR() {
-    static Material default_material_npr(glm::vec3(1.), glm::vec3(0.1), 4);
+    static Material default_material_npr(glm::vec3(1.), glm::vec3(0.1), 4, glm::vec3(1.));
     return default_material_npr;
   }
 
@@ -87,6 +92,9 @@ class Material {
   void SetIlluminatedColor(const glm::vec3& color) { illuminated_color_ = color; }
   glm::vec3 GetIlluminatedColor() const { return illuminated_color_; }
 
+  void SetOutlineColor(const glm::vec3& color) { outline_color_ = color; }
+  glm::vec3 GetOutlineColor() const { return outline_color_; }
+
   void SetOutlineThickness(const float& width) { outline_thickness_ = width; }
   float GetOutlineThickness() { return outline_thickness_; }
 
@@ -123,6 +131,7 @@ class Material {
   // Used in NPR rendering
   glm::vec3 illuminated_color_;
   glm::vec3 shadow_color_;
+  glm::vec3 outline_color_;
   float outline_thickness_;  // in pixels
   std::shared_ptr<Texture> ambient_tex_;
   std::shared_ptr<Texture> diffuse_tex_;

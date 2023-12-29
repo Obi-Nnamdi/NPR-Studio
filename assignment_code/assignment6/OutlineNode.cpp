@@ -158,6 +158,12 @@ void OutlineNode::SetShadowColor(const glm::vec3& color) {
       std::make_shared<Material>(material));
 }
 
+void OutlineNode::SetOutlineColor(const glm::vec3& color) {
+  auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
+  material.SetOutlineColor(color);
+  GetComponentPtr<MaterialComponent>()->SetMaterial(std::make_shared<Material>(material));
+}
+
 void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor) {
   // Use the diffuse color of the material we have to set its shadow and illumination color
   auto material_component_ptr = mesh_node_->GetComponentPtr<MaterialComponent>();
@@ -185,6 +191,8 @@ void OutlineNode::SetOutlineMethod(OutlineMethod method) { outline_method_ = met
 void OutlineNode::SetMeshVisibility(bool visible) { mesh_node_->SetActive(visible); }
 
 void OutlineNode::CalculateFaceDirections() {
+  // TODO: this is treated as an orthographic projection, try doing this with persepctive projection
+  // Can try using projection matrix of camera?
   // Get camera information
   auto camera_pointer = parent_scene_->GetActiveCameraPtr();
   //  Get global camera direction by transforming its "z" vector into global coordinates
@@ -423,8 +431,6 @@ void OutlineNode::ComputeSilhouetteEdges() {
     // Perform silhouette edge test
     if (faces[0]->front_facing != faces[1]->front_facing) {
       edge_info_map_[edge].is_silhouette = true;
-      //   std::cout << "Silhouette Edge:";
-      //   PrintEdge(edge);
     } else {
       edge_info_map_[edge].is_silhouette = false;
     }

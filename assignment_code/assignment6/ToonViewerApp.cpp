@@ -58,6 +58,7 @@ ToonViewerApp::ToonViewerApp(const std::string& app_name, glm::ivec2 window_size
   // TOOD: better way to do this?
   illumination_color_ = {1, 1, 1};
   shadow_color_ = {.1, .1, .1};
+  outline_color_ = {1, 1, 1};
   toon_shader_ = std::make_shared<ToonShader>();
   tone_mapping_shader_ = std::make_shared<ToneMappingShader>();
   shading_type_ = ToonShadingType::TONE_MAPPING;
@@ -194,6 +195,12 @@ void ToonViewerApp::SetShadowColor(const glm::vec3& color) {
   }
 }
 
+void ToonViewerApp::SetOutlineColor(const glm::vec3& color) {
+  for (auto node : outline_nodes_) {
+    node->SetOutlineColor(color);
+  }
+}
+
 void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor) {
   for (auto node : outline_nodes_) {
     node->OverrideNPRColorsFromDiffuse(illuminationFactor, shadowFactor);
@@ -219,6 +226,9 @@ void ToonViewerApp::DrawGUI() {
   }
   if (ImGui::ColorEdit3("Shadow Color", &shadow_color_.front())) {
     SetShadowColor(vectorToVec3(shadow_color_));
+  }
+  if (ImGui::ColorEdit3("Outline Color", &outline_color_.front())) {
+    SetOutlineColor(vectorToVec3(outline_color_));
   }
   if (ImGui::Button("Reset Colors to Material Diffuse")) {
     OverrideNPRColorsFromDiffuse(1.2, 0.5);
