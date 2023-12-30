@@ -1,10 +1,12 @@
+#ifndef EDGEUTILS_H_
+#define EDGEUTILS_H_
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#include "../assignment6/OutlineNode.hpp"
+#include "../assignment6/OutlineNode.hpp"  // Includes polyline def.
 #include "../code/gloo/shaders/MiterOutlineShader.hpp"
 
 namespace GLOO {
@@ -14,10 +16,6 @@ namespace GLOO {
  * A polyline with a loop won't have any of its path indices duplicated,
  * but its first element and last element are connected.
  */
-struct Polyline {
-  std::vector<size_t> path;
-  bool is_loop;
-};
 
 // Function to perform depth-first search to find the longest chain
 void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t>>& adjList,
@@ -168,3 +166,4 @@ int main() {
   return 0;
 }
 }  // namespace GLOO
+#endif

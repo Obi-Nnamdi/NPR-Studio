@@ -5,6 +5,7 @@
 #include <map>
 #include <utility>
 
+#include "PolylineNode.hpp"
 #include "gloo/Material.hpp"
 #include "gloo/Scene.hpp"
 #include "gloo/SceneNode.hpp"
@@ -96,6 +97,7 @@ class OutlineNode : public SceneNode {
   void ComputeSilhouetteEdges();
   void SetOutlineMesh();
   void CalculateFaceDirections();
+  void UpdatePolylineNodeMaterials(const std::shared_ptr<Material> material);
   void DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
 
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
@@ -110,7 +112,7 @@ class OutlineNode : public SceneNode {
 
   std::shared_ptr<VertexObject> mesh_;
   std::shared_ptr<VertexObject> outline_mesh_;
-  std::vector<SceneNode *> edge_nodes_;
+  std::vector<PolylineNode *> polyline_nodes_;
 
   SceneNode *mesh_node_;
 

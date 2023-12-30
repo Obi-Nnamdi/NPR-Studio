@@ -157,9 +157,13 @@ void OutlineNode::SetShadowColor(const glm::vec3& color) {
 }
 
 void OutlineNode::SetOutlineColor(const glm::vec3& color) {
+  // Update self outline node
   auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
   material.SetOutlineColor(color);
-  GetComponentPtr<MaterialComponent>()->SetMaterial(std::make_shared<Material>(material));
+  auto material_ptr = std::make_shared<Material>(material);
+  GetComponentPtr<MaterialComponent>()->SetMaterial(material_ptr);
+  // Update polyline outline nodes
+  UpdatePolylineNodeMaterials(material_ptr);
 }
 
 void OutlineNode::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor,
@@ -183,7 +187,10 @@ void OutlineNode::SetOutlineThickness(const float& width) {
   // Update material with new outline width
   auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
   material.SetOutlineThickness(width);
-  GetComponentPtr<MaterialComponent>()->SetMaterial(std::make_shared<Material>(material));
+  auto material_ptr = std::make_shared<Material>(material);
+  GetComponentPtr<MaterialComponent>()->SetMaterial(material_ptr);
+  // Update polyline outline nodes
+  UpdatePolylineNodeMaterials(material_ptr);
 }
 
 void OutlineNode::SetOutlineMethod(OutlineMethod method) { outline_method_ = method; }
@@ -211,9 +218,9 @@ void OutlineNode::CalculateFaceDirections() {
 void OutlineNode::Update(double delta_time) {
   // Reset Polyline edge nodes
   // TODO: you can do better here but for now this is fine
-  for (auto& edgeNode : edge_nodes_) {
-    edgeNode->SetActive(false);
-    // edgeNode->~SceneNode();
+  for (auto& polylineNode : polyline_nodes_) {
+    polylineNode->SetActive(false);
+    // polylineNode->~SceneNode();
   }
   // std::cout << "Children: " << GetChildrenCount() << std::endl;
   // On each frame, recaclulate the silhouette edges and draw all update edges
@@ -251,72 +258,25 @@ void OutlineNode::RenderEdges() {
   auto polylines = edgesToPolylines(renderedEdges);
   auto& positions = outline_mesh_->GetPositions();
   auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
+  auto material_ptr = std::make_shared<Material>(material);
   // std::cout << "Num Polylines: " << polylines.size() << std::endl;
   for (int i = 0; i < polylines.size(); ++i) {
     // TODO turn into their own node class
     auto& polyline = polylines[i];
     // Reuse edge nodes if we can
-    SceneNode* edgeNode;
-    if (edge_nodes_.size() > i) {
-      edgeNode = edge_nodes_[i];
-      edgeNode->SetActive(true);
+    PolylineNode* polylineNode;
+    if (polyline_nodes_.size() > i) {
+      // Update old polyline node
+      polylineNode = polyline_nodes_[i];
+      polylineNode->SetPolyline(polyline, positions);
+      polylineNode->SetActive(true);
     } else {
-      // Make a new edge node if we don't have enough
-      auto newEdgeNode = make_unique<SceneNode>();
-      edgeNode = newEdgeNode.get();
-      edge_nodes_.push_back(newEdgeNode.get());
-      AddChild(std::move(newEdgeNode));
+      // Make a new polyline node
+      auto newPolylineNode =
+          make_unique<PolylineNode>(polyline, positions, material_ptr, miter_outline_shader_);
+      polyline_nodes_.push_back(newPolylineNode.get());
+      AddChild(std::move(newPolylineNode));
     }
-    // TODO 2-length paths don't show up!
-    // (They do if you treat them as loops in edgeutils)
-    // TODO: switch between miter join rendering and regular edge rendering based on path length
-    // (i.e. don't do it for 2-length things)
-    // TODO increase edge bias
-    // Define the polyline size. If the polyline is a loop, there's technically another point from
-    // the back to the front that wasn't incldued, making the polyline one vertex longer.
-    auto polylineSize = polyline.is_loop ? polyline.path.size() + 1 : polyline.path.size();
-    auto numVertices = 6 * (polylineSize - 1);
-    // Create indices for polyline
-    auto polyLineIndices = make_unique<IndexArray>();
-    for (int i = 0; i < numVertices; ++i) {
-      polyLineIndices->push_back(i);
-    }
-    // Create positions for polyline, adding extra vertices to head or tail if the polyline is a
-    // loop
-    auto firstElt = polyline.path.front();
-    auto lastElt = polyline.path.back();
-    if (polyline.is_loop) {
-      auto secondElt = polyline.path[1];
-      // Add first elt to the end, followed by the element immediately after it.
-      polyline.path.push_back(firstElt);
-      polyline.path.push_back(secondElt);
-      // Add last element to the beginning
-      polyline.path.insert(polyline.path.begin(), lastElt);
-    } else {
-      // Otherwise, just add the first element to the beginning and last element to the end
-      polyline.path.push_back(lastElt);
-      polyline.path.insert(polyline.path.begin(), firstElt);
-    }
-    auto polylinePositions = make_unique<PositionArray>();
-    for (auto& index : polyline.path) {
-      polylinePositions->push_back(positions[index]);
-    }
-    std::shared_ptr<VertexObject> polylineMesh = std::make_shared<VertexObject>();
-    polylineMesh->UpdatePositions(std::move(polylinePositions));
-    polylineMesh->UpdateIndices(std::move(polyLineIndices));
-
-    edgeNode->CreateComponent<MaterialComponent>(std::make_shared<Material>(material));
-    edgeNode->CreateComponent<ShadingComponent>(miter_outline_shader_);
-    edgeNode->CreateComponent<RenderingComponent>(polylineMesh);
-
-    // Print polyline information
-    // std::cout << "Polyline: ";
-    // for (size_t node : polyline.path) {
-    //   std::cout << node << " ";
-    // }
-    // std::cout << std::endl;
-    // std::cout << "Loop: " << (polyline.is_loop ? "True" : "False");
-    // std::cout << std::endl;
   }
   outline_mesh_->UpdateIndices(std::move(newIndices));
 }
@@ -433,6 +393,16 @@ void OutlineNode::ComputeSilhouetteEdges() {
       edge_info_map_[edge].is_silhouette = true;
     } else {
       edge_info_map_[edge].is_silhouette = false;
+    }
+  }
+}
+
+void OutlineNode::UpdatePolylineNodeMaterials(const std::shared_ptr<Material> material) {
+  for (auto node : polyline_nodes_) {
+    // Only update active polyline nodes.
+    // TODO: why did I need to do this? Got a segfault when I didn't do this.
+    if (node->IsActive()) {
+      node->SetMaterial(material);
     }
   }
 }
