@@ -233,7 +233,10 @@ void OutlineNode::Update(double delta_time) {
 
 void OutlineNode::RenderEdges() {
   auto newIndices = make_unique<IndexArray>();
-  auto renderedEdges = std::vector<Edge>();
+  // Render miter join edges in passes
+  auto renderedSilhouetteEdges = std::vector<Edge>();
+  auto renderedCreaseEdges = std::vector<Edge>();
+  auto renderedBorderEdges = std::vector<Edge>();
 
   // Only iterate through our edges if we're going to draw any of them
   if (show_silhouette_edges_ || show_border_edges_ || show_crease_edges_) {
@@ -248,34 +251,52 @@ void OutlineNode::RenderEdges() {
           newIndices->push_back(edge.first);
           newIndices->push_back(edge.second);
         } else if (outline_method_ == OutlineMethod::MITER) {
-          // TODO: maybe render edges in passes?
-          renderedEdges.push_back(edge);  // record edge for polyline drawing purposes
+          // record edges of each type for polyline drawing purposes
+          if (info.is_silhouette && show_silhouette_edges_) {
+            renderedSilhouetteEdges.push_back(edge);
+          }
+          if (info.is_border && show_border_edges_) {
+            renderedBorderEdges.push_back(edge);
+          }
+          if (info.is_crease && show_crease_edges_) {
+            renderedCreaseEdges.push_back(edge);
+          }
         }
       }
     }
   }
-  // Polyline stuff
-  auto polylines = edgesToPolylines(renderedEdges);
+
+  // Render polylines if we're doing the miter join method
+  auto polylineGroups = {edgesToPolylines(renderedSilhouetteEdges),
+                         edgesToPolylines(renderedCreaseEdges),
+                         edgesToPolylines(renderedBorderEdges)};
+
   auto& positions = outline_mesh_->GetPositions();
   auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
   auto material_ptr = std::make_shared<Material>(material);
   // std::cout << "Num Polylines: " << polylines.size() << std::endl;
-  for (int i = 0; i < polylines.size(); ++i) {
-    // TODO turn into their own node class
-    auto& polyline = polylines[i];
-    // Reuse edge nodes if we can
-    PolylineNode* polylineNode;
-    if (polyline_nodes_.size() > i) {
-      // Update old polyline node
-      polylineNode = polyline_nodes_[i];
-      polylineNode->SetPolyline(polyline, positions);
-      polylineNode->SetActive(true);
-    } else {
-      // Make a new polyline node
-      auto newPolylineNode =
-          make_unique<PolylineNode>(polyline, positions, material_ptr, miter_outline_shader_);
-      polyline_nodes_.push_back(newPolylineNode.get());
-      AddChild(std::move(newPolylineNode));
+  // Render polylines in passes
+  // keep a global tracker of how many polylines we've currently rendered
+  size_t polylineCounter = 0;
+  for (auto& polylines : polylineGroups) {
+    size_t lastPassPolylines =
+        polylineCounter;  // tracks how many polylines we've rendered up to the previous pass
+    for (; (polylineCounter - lastPassPolylines) < polylines.size(); ++polylineCounter) {
+      auto& polyline = polylines[polylineCounter - lastPassPolylines];
+      // Reuse edge nodes if we can
+      PolylineNode* polylineNode;
+      if (polyline_nodes_.size() > polylineCounter) {
+        // Update old polyline node
+        polylineNode = polyline_nodes_[polylineCounter];
+        polylineNode->SetPolyline(polyline, positions);
+        polylineNode->SetActive(true);
+      } else {
+        // Make a new polyline node
+        auto newPolylineNode =
+            make_unique<PolylineNode>(polyline, positions, material_ptr, miter_outline_shader_);
+        polyline_nodes_.push_back(newPolylineNode.get());
+        AddChild(std::move(newPolylineNode));
+      }
     }
   }
   outline_mesh_->UpdateIndices(std::move(newIndices));
