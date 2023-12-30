@@ -399,11 +399,7 @@ void OutlineNode::ComputeSilhouetteEdges() {
 
 void OutlineNode::UpdatePolylineNodeMaterials(const std::shared_ptr<Material> material) {
   for (auto node : polyline_nodes_) {
-    // Only update active polyline nodes.
-    // TODO: why did I need to do this? Got a segfault when I didn't do this.
-    if (node->IsActive()) {
-      node->SetMaterial(material);
-    }
+    node->SetMaterial(material);
   }
 }
 }  // namespace GLOO

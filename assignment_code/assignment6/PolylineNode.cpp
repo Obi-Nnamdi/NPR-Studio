@@ -99,7 +99,12 @@ void PolylineNode::SetPolyline(const Polyline& polyline, const PositionArray& me
   }
 }
 void PolylineNode::SetMaterial(const std::shared_ptr<Material>& material) {
-  GetComponentPtr<MaterialComponent>()->SetMaterial(material);
+  auto materialComponentPtr = GetComponentPtr<MaterialComponent>();
+  if (materialComponentPtr != nullptr) {
+    GetComponentPtr<MaterialComponent>()->SetMaterial(material);
+  } else {
+    CreateComponent<MaterialComponent>(material);
+  }
 }
 void PolylineNode::SetShader(const std::shared_ptr<ShaderProgram>& shader) {
   GetComponentPtr<ShadingComponent>()->SetShader(shader);
