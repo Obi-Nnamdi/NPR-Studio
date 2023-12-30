@@ -24,8 +24,7 @@ void main()
     {
         vec3 world_position = vec3(model_matrix * vertex[line_i + i]);
         va[i] = projection_matrix * view_matrix * vec4(world_position, 1.0);
-        // either that, or:
-        // va[i] = projection_matrix * view_matrix * model_matrix * vertex[line_i + i];
+
         va[i].xyz /= va[i].w;
         va[i].xy = (va[i].xy + 1.0) * 0.5 * u_resolution;
     }

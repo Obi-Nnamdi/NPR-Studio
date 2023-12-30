@@ -45,23 +45,27 @@ void PolylineNode::SetPolyline(const Polyline& polyline, const PositionArray& me
   polyline_.path = polyline.path;
   polyline_.is_loop = polyline.is_loop;
 
-  // TODO 2-length paths don't show up!
-  // (They do if you treat them as loops in edgeutils)
-  // TODO: switch between miter join rendering and regular edge rendering based on path length
-  // (i.e. don't do it for 2-length things)
-  // TODO increase edge bias
+  // TODO we currently have a problem where the miter joins intersect the existing model geometry
+  // and get partially rendered behind it, which might mean we need to increase edge bias? Doesn't
+  // seem like it does mcuh though.
+
+  //   TODO multiple connections between vertices aren't represented properly with our polyline
+  //   method.
 
   // Define the polyline size. If the polyline is a loop, there's technically another point from
   // the back to the front that wasn't incldued, making the polyline one vertex longer.
   auto polylineSize = polyline_.is_loop ? polyline_.path.size() + 1 : polyline_.path.size();
-  auto numVertices = 6 * (polylineSize - 1);
+  auto numVertices =
+      6 * (polylineSize - 1);  // 6 vertices are rendered in the shader per polyline segment.
   // Create indices for polyline
   auto polyLineIndices = make_unique<IndexArray>();
+  auto polylinePositions = make_unique<PositionArray>();
   for (int i = 0; i < numVertices; ++i) {
     polyLineIndices->push_back(i);
   }
-  // Create positions for polyline, adding extra vertices to head or tail if the polyline is a
-  // loop
+  // Create positions for polyline, adding extra vertices to head or tail if
+  // the polyline is a loop. Note that the first and last indices of the final position array act as
+  // the tangents of the first and last line segments.
   auto firstElt = polyline_.path.front();
   auto lastElt = polyline_.path.back();
   if (polyline_.is_loop) {
@@ -71,14 +75,27 @@ void PolylineNode::SetPolyline(const Polyline& polyline, const PositionArray& me
     polyline_.path.push_back(secondElt);
     // Add last element to the beginning
     polyline_.path.insert(polyline_.path.begin(), lastElt);
+    // Populate Polyline Indices
+    for (auto& index : polyline_.path) {
+      polylinePositions->push_back(meshPositions[index]);
+    }
   } else {
-    // Otherwise, just add the first element to the beginning and last element to the end
-    polyline_.path.push_back(lastElt);
-    polyline_.path.insert(polyline_.path.begin(), firstElt);
-  }
-  auto polylinePositions = make_unique<PositionArray>();
-  for (auto& index : polyline_.path) {
-    polylinePositions->push_back(meshPositions[index]);
+    // Populate Polyline Indices based on original path
+    for (auto& index : polyline_.path) {
+      polylinePositions->push_back(meshPositions[index]);
+    }
+    // Use the slopes of the line segements connecting to the first and last elements of the
+    // polyline path to populate the first and last points of the position array
+    auto firstEltPos = meshPositions[firstElt];
+    auto secondEltPos = meshPositions[polyline_.path[1]];
+    auto lastEltPos = meshPositions[lastElt];
+    auto secondToLastEltPos = meshPositions[polyline_.path[polyline_.path.size() - 2]];
+    glm::vec3 firstSlope = glm::normalize(secondEltPos - firstEltPos);
+    glm::vec3 lastSlope = glm::normalize(lastEltPos - secondToLastEltPos);
+
+    // Insert the new points.
+    polylinePositions->push_back(lastEltPos + lastSlope);
+    polylinePositions->insert(polylinePositions->begin(), firstEltPos - firstSlope);
   }
 
   // Update or create a vertex object for the positions/indices.

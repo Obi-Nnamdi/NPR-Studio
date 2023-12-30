@@ -41,8 +41,8 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
       Polyline line;
       auto firstElt = currentPath.front();
       auto lastElt = currentPath.back();
-      // We only consider loops if they're more than 1 node long (2-length cycles and up)
-      int edge_cycle_length = 2;
+      // We only consider loops if they're more than 2 nodes long (3-length cycles and up)
+      int edge_cycle_length = 3;
       line.is_loop =
           adjList.at(firstElt).count(lastElt) > 0 && currentPath.size() >= edge_cycle_length;
       line.path = currentPath;
