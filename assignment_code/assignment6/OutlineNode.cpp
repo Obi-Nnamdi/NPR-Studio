@@ -133,6 +133,7 @@ void OutlineNode::ChangeMeshShader(ToonShadingType shadingType) {
 
 void OutlineNode::ChangeMeshShader(std::shared_ptr<ShaderProgram> shader) {
   // Directly substitute mesh shader for given shader
+  // TODO: bug when changing mesh shader when mesh is inactive.
   mesh_shader_ = shader;
   mesh_node_->GetComponentPtr<ShadingComponent>()->SetShader(mesh_shader_);
 }

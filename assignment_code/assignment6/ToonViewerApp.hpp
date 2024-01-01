@@ -37,11 +37,15 @@ class ToonViewerApp : public Application {
   void OverrideNPRColorsFromDiffuse(float illuminationFactor = 1.5, float shadowFactor = .5,
                                     float outlineFactor = 1);
 
+  void RenderImageToFile() const;
   bool showSilhouette = true;
   bool showCrease = true;
   bool showBorder = true;
   bool useMiterJoins = false;
   bool showMesh = true;
+  // Control for getting screenshots from renderer
+  // TODO do this in a less hacky way (do rendering to a texture?)
+  int renderingImageCountdown = -1;
 
   float crease_threshold_ = 30;  // in degrees
   float outline_thickness_ = 4;  // in pixels

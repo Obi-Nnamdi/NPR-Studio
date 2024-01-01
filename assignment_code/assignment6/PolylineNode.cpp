@@ -47,7 +47,8 @@ void PolylineNode::SetPolyline(const Polyline& polyline, const PositionArray& me
 
   // TODO we currently have a problem where the miter joins intersect the existing model geometry
   // and get partially rendered behind it, which might mean we need to increase edge bias? Doesn't
-  // seem like it does mcuh though.
+  // seem like it does mcuh though. This is pretty visible in border edges. (Lamp.obj and the
+  // default cylinder)
 
   //   TODO multiple connections between vertices aren't represented properly with our polyline
   //   method.

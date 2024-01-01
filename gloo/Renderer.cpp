@@ -23,7 +23,7 @@ const glm::mat4 kLightProjection =
 namespace GLOO {
 Renderer::Renderer(Application& application) : application_(application) {
   UNUSED(application_);
-  background_color_ = glm::vec4(0.);
+  background_color_ = glm::vec4(0, 0, 0, 1.);
   // Reserve Space for Shadow Depth Texture
   shadow_depth_tex_ = make_unique<Texture>();
   shadow_depth_tex_->Reserve(GL_DEPTH_COMPONENT, kShadowWidth, kShadowHeight, GL_DEPTH_COMPONENT,

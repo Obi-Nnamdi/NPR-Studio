@@ -4,6 +4,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "../common/helpers.hpp"
+#include "../stb/stb_image_write.h"
 #include "OutlineNode.hpp"
 #include "SunNode.hpp"
 #include "gloo/MeshLoader.hpp"
@@ -215,72 +216,147 @@ void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float
   }
 }
 
+void ToonViewerApp::RenderImageToFile() const {
+  // Use glReadPixels to get image data from entire window, starting at its lower left corner.
+  auto windowSize = GetWindowSize();
+  auto width = windowSize.x;
+  auto height = windowSize.y;
+  glm::ivec2 lowerLeftCorner(0, 0);
+  int channels = 4;  // RGBA image data
+
+  // Use heap allocation to store image data
+  uint8_t* imageData =
+      new uint8_t[width * height * channels];  // RGBA image data in row-major order
+  GL_CHECK(glReadPixels(lowerLeftCorner.x, lowerLeftCorner.y, width, height, GL_RGBA,
+                        GL_UNSIGNED_INT_8_8_8_8_REV, imageData));
+  // Note that byte order is weird unless you use GL_UNSIGNED_INT_8_8_8_8_REV
+  // Print image data
+  // for (int j = 0; j < height; j++) {   // rows
+  //   for (int i = 0; i < width; i++) {  // columns
+  //     auto pixelIndex = (j * width + i) * channels;
+  //     char output[200];
+  //     snprintf(output, 100, "rgba(%d, %d, %d, %d)", imageData[pixelIndex],
+  //              imageData[pixelIndex + 1], imageData[pixelIndex + 2], imageData[pixelIndex + 3]);
+  //     std::cout << output << std::endl;
+  //   }
+  // }
+
+  // Write image data to png
+  std::string filename = "./render.png";  // TODO make dynamic
+  int row_stride =
+      sizeof(uint8_t) * width * channels;  // distance between rows of image data (in bytes)
+  stbi_flip_vertically_on_write(true);     // Flip image vertically when writing for openGL
+  stbi_write_png_compression_level = 0;
+  stbi_write_png(filename.c_str(), width, height, channels, imageData, row_stride);
+
+  // Free imageData memory
+  delete[] imageData;
+}
+
 void ToonViewerApp::DrawGUI() {
+  // Special cases to hide GUI when we're taking a screenshot:
+  if (renderingImageCountdown == 0) {
+    RenderImageToFile();
+    renderingImageCountdown--;
+    return;
+  } else if (renderingImageCountdown > 0) {
+    renderingImageCountdown--;
+    return;
+  }
+
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
-  ImGui::Begin("Control Panel");
-  ImGui::Text("Lighting Controls:");
-  // Button for toggling light visibility
-  if (ImGui::Button("Toggle Light Type")) {
-    sun_node_->ToggleLight();
-  }
+  // Use ImGUI::SameLine to add multiple items next to each other
+  // ImGui::ShowDemoWindow();
 
-  ImGui::Text("Point Light Controls:");
-  // Slider for changing light radius
-  if (ImGui::SliderFloat("Light Radius", &point_light_radius_, 0, 30, "%.2f")) {
-    sun_node_->SetRadius(point_light_radius_);
-  }
+  ImGui::Begin("Rendering Controls");
 
-  ImGui::Text("Shader Controls:");
-  // Controls background color of our scene
-  if (ImGui::ColorEdit4("Background Color", &background_color_.front())) {
-    SetBackgroundColor(vectorToVec4(background_color_));
+  // Use SetNextItemOpen() so set the default state of a node to be open. We could
+  // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
+  // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  if (ImGui::CollapsingHeader("Lighting Controls:")) {
+    // Button for toggling light visibility
+    if (ImGui::Button("Toggle Light Type (Point/Directional)")) {
+      sun_node_->ToggleLight();
+    }
+    ImGui::Separator();
+
+    ImGui::Text("Point Light Controls:");
+    // Slider for changing light radius
+    if (ImGui::SliderFloat("Light Radius", &point_light_radius_, 0, 30, "%.2f")) {
+      sun_node_->SetRadius(point_light_radius_);
+    }
   }
-  if (ImGui::ColorEdit3("Illumination Color", &illumination_color_.front())) {
-    SetIlluminatedColor(vectorToVec3(illumination_color_));
-  }
-  if (ImGui::ColorEdit3("Shadow Color", &shadow_color_.front())) {
-    SetShadowColor(vectorToVec3(shadow_color_));
-  }
-  if (ImGui::ColorEdit3("Outline Color", &outline_color_.front())) {
-    SetOutlineColor(vectorToVec3(outline_color_));
-  }
-  if (ImGui::Button("Reset Colors to Material Diffuse")) {
-    OverrideNPRColorsFromDiffuse(1.2, 0.5);
-  }
-  // Button for toggling between our shader types
-  if (ImGui::Button("Toggle Toon/Tone Mapping Shader")) {
-    ToggleShading();
+  // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  if (ImGui::CollapsingHeader("Shader Controls:")) {
+    // Controls background color of our scene
+    if (ImGui::ColorEdit4("Background Color", &background_color_.front(),
+                          ImGuiColorEditFlags_AlphaPreview)) {
+      SetBackgroundColor(vectorToVec4(background_color_));
+    }
+    if (ImGui::ColorEdit3("Illumination Color", &illumination_color_.front())) {
+      SetIlluminatedColor(vectorToVec3(illumination_color_));
+    }
+    if (ImGui::ColorEdit3("Shadow Color", &shadow_color_.front())) {
+      SetShadowColor(vectorToVec3(shadow_color_));
+    }
+    if (ImGui::ColorEdit3("Outline Color", &outline_color_.front())) {
+      SetOutlineColor(vectorToVec3(outline_color_));
+    }
+    if (ImGui::Button("Reset Colors to Material Diffuse")) {
+      OverrideNPRColorsFromDiffuse(1.2, 0.5);
+    }
+    // Button for toggling between our shader types
+    if (ImGui::Button("Toggle Toon/Tone Mapping Shader")) {
+      ToggleShading();
+    }
   }
 
   // Checkboxes for toggling edge type displays
-  ImGui::Text("Edge Controls:");
-  if (ImGui::Checkbox("Use Miter Join Method (slow/experimental)", &useMiterJoins)) {
-    UpdateOutlineMethod();
-  }
-  ImGui::Text("Edge Width:");
-  if (ImGui::SliderFloat("Pixels", &outline_thickness_, 0, 100, "%.1f")) {
-    UpdateOutlineThickness();
-  }
-  if (ImGui::Checkbox("Draw Silhouette Edges", &showSilhouette)) {
-    UpdateSilhouetteStatus();
+  // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  if (ImGui::CollapsingHeader("Edge Controls:")) {
+    if (ImGui::Checkbox("Use Miter Join Method (slow/experimental)", &useMiterJoins)) {
+      UpdateOutlineMethod();
+    }
+    ImGui::Separator();
+
+    ImGui::Text("Edge Width:");
+    if (ImGui::SliderFloat("Pixels", &outline_thickness_, 0, 100, "%.1f")) {
+      UpdateOutlineThickness();
+    }
+    ImGui::Separator();
+
+    if (ImGui::Checkbox("Draw Silhouette Edges", &showSilhouette)) {
+      UpdateSilhouetteStatus();
+    }
+
+    if (ImGui::Checkbox("Draw Crease Edges", &showCrease)) {
+      UpdateCreaseStatus();
+    }
+
+    if (ImGui::Checkbox("Draw Border Edges", &showBorder)) {
+      UpdateBorderStatus();
+    }
+    ImGui::Separator();
+
+    ImGui::Text("Crease Threshold:");
+    // TODO: should this go to 360?
+    if (ImGui::SliderFloat("Degrees", &crease_threshold_, 0, 180, "%.1f")) {
+      UpdateCreaseThreshold();
+    }
   }
 
-  if (ImGui::Checkbox("Draw Crease Edges", &showCrease)) {
-    UpdateCreaseStatus();
+  // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  if (ImGui::CollapsingHeader("Mesh Controls:")) {
+    if (ImGui::Checkbox("Show Mesh", &showMesh)) {
+      UpdateMeshVisibility();
+    }
   }
 
-  if (ImGui::Checkbox("Draw Border Edges", &showBorder)) {
-    UpdateBorderStatus();
-  }
-
-  ImGui::Text("Crease Threshold:");
-  // TODO: should this go to 360?
-  if (ImGui::SliderFloat("Degrees", &crease_threshold_, 0, 180, "%.1f")) {
-    UpdateCreaseThreshold();
-  }
-  ImGui::Text("Mesh Controls:");
-  if (ImGui::Checkbox("Show Mesh", &showMesh)) {
-    UpdateMeshVisibility();
+  // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  if (ImGui::CollapsingHeader("File Controls:")) {
+    if (ImGui::Button("Save Image")) {
+      renderingImageCountdown = 3;
+    }
   }
 
   ImGui::End();
