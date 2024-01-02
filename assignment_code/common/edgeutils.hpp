@@ -11,25 +11,23 @@
 
 namespace GLOO {
 
-/**
- * Struct defining a polyline with a path, that can also be a loop.
- * A polyline with a loop won't have any of its path indices duplicated,
- * but its first element and last element are connected.
- */
+// We only consider loops if they're more than 2 nodes long (3-length cycles and up)
+int edge_cycle_length = 3;
 
 // Function to perform depth-first search to find the longest chain
 void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t>>& adjList,
          std::unordered_set<size_t>& visited, std::vector<size_t>& currentPath,
-         std::vector<size_t>& longestPath, std::vector<Polyline>& paths) {
+         std::vector<size_t>& connectedComponent, std::vector<Polyline>& paths) {
   visited.insert(node);
+  connectedComponent.push_back(node);
   currentPath.push_back(node);
 
   int counter = 0;
   for (size_t neighbor : adjList.at(node)) {
-    // TODO: if we have multiple neighbors, find a way to combine the paths produced by all of them
-    // together somehow
+    // TODO: if we have multiple neighbors, find a way to combine the paths produced by all of
+    // them together somehow
     if (visited.find(neighbor) == visited.end()) {
-      dfs(neighbor, adjList, visited, currentPath, longestPath, paths);
+      dfs(neighbor, adjList, visited, currentPath, connectedComponent, paths);
       counter++;
     }
   }
@@ -42,18 +40,11 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
       auto firstElt = currentPath.front();
       auto lastElt = currentPath.back();
       // We only consider loops if they're more than 2 nodes long (3-length cycles and up)
-      int edge_cycle_length = 3;
       line.is_loop =
           adjList.at(firstElt).count(lastElt) > 0 && currentPath.size() >= edge_cycle_length;
       line.path = currentPath;
       paths.push_back(line);
     }
-  }
-
-  // Update the longest path
-  // TODO: longestPath really isn't needed.
-  if (currentPath.size() > longestPath.size()) {
-    longestPath = currentPath;
   }
 
   // Backtrack
@@ -98,6 +89,50 @@ void splitPolylines(std::vector<Polyline>& paths, int max_size) {
   }
 }
 
+// Performs dfs on `node` using give adjList, but visits every edge instead of just visiting every
+// node.
+void edgeDfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t>>& adjList,
+             std::unordered_set<Edge, pairhash, KeyEqual>& visited,
+             std::unordered_set<size_t>& finished, std::vector<size_t>& currentPath,
+             std::vector<Polyline>& paths) {
+  currentPath.push_back(node);
+
+  // Go through each node's connection
+  int counter = 0;
+  for (size_t neighbor : adjList.at(node)) {
+    Edge connection = Edge(node, neighbor);
+
+    // TODO: if we have multiple neighbors, find a way to combine the paths produced by all of them
+    // together somehow
+    if (visited.find(connection) == visited.end()) {
+      // Mark connection as visited
+      visited.insert(connection);
+      edgeDfs(neighbor, adjList, visited, finished, currentPath, paths);
+      counter++;
+    }
+  }
+  // Once we're done exploring the node's connections, mark it as finished
+  finished.insert(node);
+
+  // Emit path if we're at a leaf
+  // TODO: add some way to prune the path to prevent too much work?
+  if (counter == 0) {
+    if (currentPath.size() > 0) {
+      Polyline line;
+      auto firstElt = currentPath.front();
+      auto lastElt = currentPath.back();
+      // We only consider loops if they're more than 2 nodes long (3-length cycles and up)
+      line.is_loop =
+          adjList.at(firstElt).count(lastElt) > 0 && currentPath.size() >= edge_cycle_length;
+      line.path = currentPath;
+      paths.push_back(line);
+    }
+  }
+
+  // Backtrack
+  currentPath.pop_back();
+}
+
 /**
  * Function to transform edges to polylines. A polyline is a consecutive list of vertices that
  * traverse a "chain" of connected vertices in a graph. Every vertex is guaranteed to be represented
@@ -114,17 +149,18 @@ std::vector<Polyline> edgesToPolylines(const std::vector<Edge>& edges) {
   }
 
   std::vector<Polyline> paths;
-  // Perform DFS to find the longest path for each connected component
-  std::unordered_set<size_t> visited;
-  std::vector<std::vector<size_t>> result;
+  // Perform edge-DFS to find the longest path for each connected component
+  // Use edge-dfs to ensure all connections between nodes get rendered, not just each node.
+  std::unordered_set<size_t> finished;
+  std::unordered_set<Edge, pairhash, KeyEqual> visited;
 
+  // Find connected components
   for (const auto& entry : adjList) {
-    // Go through each node that hasn't been visted yet
+    // Go through each node that hasn't been finished yet
     size_t node = entry.first;
-    if (visited.find(node) == visited.end()) {
-      std::vector<size_t> currentPath, longestPath;
-      dfs(node, adjList, visited, currentPath, longestPath, paths);
-      result.push_back(longestPath);
+    if (finished.find(node) == finished.end()) {
+      std::vector<size_t> currentPath;
+      edgeDfs(node, adjList, visited, finished, currentPath, paths);
     }
   }
 

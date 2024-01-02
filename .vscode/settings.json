@@ -70,6 +70,7 @@
     "__tree": "cpp",
     "map": "cpp",
     "unordered_set": "cpp",
-    "functional": "cpp"
+    "functional": "cpp",
+    "thread": "cpp"
   }
 }

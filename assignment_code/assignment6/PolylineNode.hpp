@@ -8,13 +8,18 @@
 
 namespace GLOO {
 /**
- * Class representing a node that renders a single polyline.
+ * Struct defining a polyline with a path, that can also be a loop.
+ * A polyline with a loop won't have any of its path indices duplicated,
+ * but its first element and last element are connected.
  */
-
 struct Polyline {
   std::vector<size_t> path;
   bool is_loop;
 };
+
+/**
+ * Class representing a node that renders a single polyline.
+ */
 class PolylineNode : public SceneNode {
  public:
   /**
