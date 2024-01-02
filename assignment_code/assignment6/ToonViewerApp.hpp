@@ -21,6 +21,7 @@ class ToonViewerApp : public Application {
   SunNode* sun_node_;
   std::vector<OutlineNode*> outline_nodes_;
   void ToggleShading();
+  void SetShadingType(const ToonShadingType& shading_type);
   // Functions for globally hiding or unhiding each edge type
   void UpdateSilhouetteStatus();
   void UpdateCreaseStatus();
@@ -39,6 +40,9 @@ class ToonViewerApp : public Application {
 
   void RenderImageToFile(const std::string filename, const std::string extension) const;
   void SaveRenderSettings(const std::string filename);  // saves in /presets folder
+  void LoadRenderSettings(const std::string filename);  // loads from /presets folder
+
+  // GUI variables
 
   bool show_silhouette_ = true;
   bool show_crease_ = true;

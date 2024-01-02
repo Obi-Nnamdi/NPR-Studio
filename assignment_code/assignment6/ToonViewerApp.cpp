@@ -172,6 +172,10 @@ void ToonViewerApp::ToggleShading() {
   shading_type_ = shading_type_ == ToonShadingType::TOON ? ToonShadingType::TONE_MAPPING
                                                          : ToonShadingType::TOON;
 
+  SetShadingType(shading_type_);
+}
+
+void ToonViewerApp::SetShadingType(const ToonShadingType& shading_type) {
   // Get associated shader
   // TODO: Map data structure for easier logic?
   std::shared_ptr<ShaderProgram> newShader;
@@ -364,6 +368,123 @@ void ToonViewerApp::SaveRenderSettings(const std::string filename) {
   }
 }
 
+void ToonViewerApp::LoadRenderSettings(const std::string filename) {
+  std::string settingsDir = "presets";
+  std::string full_filename = "./" + settingsDir + "/" + filename + ".npr";
+  std::ifstream file(full_filename);
+  if (file.is_open()) {
+    std::string line;
+    while (std::getline(file, line)) {
+      // Handle importing colors
+      if (line == "colors") {
+        while (std::getline(file, line)) {
+          if (line == "end") {
+            break;
+          }
+          std::vector<std::string> tokens = Split(line, ' ');
+          std::string command = tokens[0];  // The command is always the first line token
+          // Make a float vector out of the rest of the line
+          std::vector<float> values;
+          for (int i = 1; i < tokens.size(); i++) {
+            values.push_back(std::stof(tokens[i]));
+          }
+          if (command == "background") {
+            background_color_ = values;
+            SetBackgroundColor(vectorToVec4(values));
+          } else if (command == "illum") {
+            illumination_color_ = values;
+            SetIlluminatedColor(vectorToVec3(values));
+          } else if (command == "shadow") {
+            shadow_color_ = values;
+            SetShadowColor(vectorToVec3(values));
+          } else if (command == "outline") {
+            outline_color_ = values;
+            SetOutlineColor(vectorToVec3(values));
+          }
+        }
+      }
+      // Handle shader settings
+      else if (line == "shader") {
+        while (std::getline(file, line)) {
+          if (line == "end") {
+            break;
+          }
+          std::vector<std::string> tokens = Split(line, ' ');
+          std::string command = tokens[0];
+          if (command == "type") {
+            std::string value = tokens[1];
+            ToonShadingType shading_type = static_cast<ToonShadingType>(std::stoi(value));
+            shading_type_ = shading_type;
+            SetShadingType(shading_type_);
+          }
+        }
+      }
+      // Handle outline settings
+      else if (line == "outlines") {
+        while (std::getline(file, line)) {
+          if (line == "end") {
+            break;
+          }
+          std::vector<std::string> tokens = Split(line, ' ');
+          std::string command = tokens[0];
+          std::string value = tokens[1];
+          if (command == "miter") {
+            use_miter_joins_ = std::stoi(value);
+            UpdateOutlineMethod();
+          } else if (command == "sil") {
+            show_silhouette_ = std::stoi(value);
+            UpdateSilhouetteStatus();
+          } else if (command == "crease") {
+            show_crease_ = std::stoi(value);
+            UpdateCreaseStatus();
+          } else if (command == "border") {
+            show_border_ = std::stoi(value);
+            UpdateBorderStatus();
+          } else if (command == "width") {
+            outline_thickness_ = std::stof(value);
+            UpdateOutlineThickness();
+          } else if (command == "thresh") {
+            crease_threshold_ = std::stof(value);
+            UpdateCreaseThreshold();
+          }
+        }
+      }
+      // Handle mesh settings
+      else if (line == "mesh") {
+        while (std::getline(file, line)) {
+          if (line == "end") {
+            break;
+          }
+          std::vector<std::string> tokens = Split(line, ' ');
+          std::string command = tokens[0];
+          std::string value = tokens[1];
+          if (command == "visible") {
+            show_mesh_ = std::stoi(value);
+            UpdateMeshVisibility();
+          }
+        }
+      }
+      // Handle light settings
+      else if (line == "light") {
+        while (std::getline(file, line)) {
+          if (line == "end") {
+            break;
+          }
+          std::vector<std::string> tokens = Split(line, ' ');
+          std::string command = tokens[0];
+          std::string value = tokens[1];
+          if (command == "type") {
+            sun_node_->SetLightType(static_cast<LightType>(std::stoi(value)));
+          } else if (command == "radius") {
+            point_light_radius_ = std::stof(value);
+            sun_node_->SetRadius(point_light_radius_);
+          }
+        }
+      }
+    }
+  }
+}
+
 void ToonViewerApp::DrawGUI() {
   // Information for file rendering.
   const char* fileExtensions[] = {".png", ".jpg", ".bmp", ".tga"};
@@ -382,13 +503,13 @@ void ToonViewerApp::DrawGUI() {
 
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   // Use ImGUI::SameLine to add multiple items next to each other
-  ImGui::ShowDemoWindow();
+  // ImGui::ShowDemoWindow();
 
   ImGui::Begin("Rendering Controls");
 
   // Use SetNextItemOpen() so set the default state of a node to be open. We could
-  // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the same thing!
-  // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the
+  // same thing! ImGui::SetNextItemOpen(true, ImGuiCond_Once);
   if (ImGui::CollapsingHeader("Lighting Controls:")) {
     // Button for toggling light visibility
     if (ImGui::Button("Toggle Light Type (Point/Directional)")) {
@@ -493,10 +614,10 @@ void ToonViewerApp::DrawGUI() {
     ImGui::Combo("format", &item_current, fileExtensions, IM_ARRAYSIZE(fileExtensions));
 
     // Preset Saving Dialog
-    static char settingsFilename[512];
+    static char saveSettingsFilename[512];
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .3f);
     if (ImGui::Button("Save Settings")) {
-      SaveRenderSettings(settingsFilename);
+      SaveRenderSettings(saveSettingsFilename);
     }
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
@@ -506,9 +627,28 @@ void ToonViewerApp::DrawGUI() {
 
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .5f);
     ImGui::SameLine();
-    ImGui::PushID("Settings Filename Label");
-    ImGui::InputTextWithHint(/*label = */ "", "filename", settingsFilename,
-                             IM_ARRAYSIZE(settingsFilename));
+    ImGui::PushID("Save Settings Filename Label");
+    ImGui::InputTextWithHint(/*label = */ "", "filename", saveSettingsFilename,
+                             IM_ARRAYSIZE(saveSettingsFilename));
+    ImGui::PopID();
+
+    // Preset Loading Dialog
+    static char loadSettingsFilename[512];
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .3f);
+    if (ImGui::Button("Load Settings")) {
+      LoadRenderSettings(loadSettingsFilename);
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::BeginTooltip();
+      ImGui::Text("Loads from presets/ folder of working directory. Don't include extension.");
+      ImGui::EndTooltip();
+    }
+
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .5f);
+    ImGui::SameLine();
+    ImGui::PushID("Load Settings Filename Label");
+    ImGui::InputTextWithHint(/*label = */ "", "filename", loadSettingsFilename,
+                             IM_ARRAYSIZE(loadSettingsFilename));
     ImGui::PopID();
   }
 
