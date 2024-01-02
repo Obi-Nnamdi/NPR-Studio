@@ -1,7 +1,11 @@
 #include "ToonViewerApp.hpp"
 
+#include <sys/stat.h>
+
+#include <fstream>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <iostream>
 
 #include "../common/helpers.hpp"
 #include "../stb/stb_image_write.h"
@@ -55,6 +59,44 @@ void SetNPRColorsFromDiffuse(GLOO::MeshData& mesh_data, float illuminationFactor
     }
   }
 }
+
+// Prints vector of floats to a space separated string
+std::string floatVectorToString(const std::vector<float>& values) {
+  std::string output = "";
+  for (int i = 0; i < values.size(); i++) {
+    float value = values[i];
+    std::ostringstream stream;
+    stream << value;
+    output += std::string(stream.str());
+    // Add a space at the end of every float except the last one
+    if (i != values.size() - 1) {
+      output += " ";
+    }
+  }
+  return output;
+}
+
+#ifdef _WIN32
+// Function to create a directory if it doesn't exist (Windows-specific)
+void CreateDirectoryIfNotExists(const std::string& directoryPath) {
+  if (!CreateDirectoryA(directoryPath.c_str(), NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+    std::cerr << "Error creating directory: " << directoryPath << std::endl;
+  }
+}
+#elif defined(__APPLE__) || defined(__linux__)
+// Function to create a directory if it doesn't exist (POSIX - macOS/Linux)
+void CreateDirectoryIfNotExists(const std::string& directoryPath) {
+  struct stat st;
+  if (stat(directoryPath.c_str(), &st) == -1) {
+    // Directory doesn't exist, so create it
+    if (mkdir(directoryPath.c_str(), 0777) != 0) {
+      std::cerr << "Error creating directory: " << directoryPath << std::endl;
+    }
+  }
+}
+#else
+#error Unsupported platform for reading and writing file directories
+#endif
 }  // namespace
 
 namespace GLOO {
@@ -148,21 +190,21 @@ void ToonViewerApp::ToggleShading() {
 void ToonViewerApp::UpdateSilhouetteStatus() {
   // Update outline nodes
   for (auto node : outline_nodes_) {
-    node->SetSilhouetteStatus(showSilhouette);
+    node->SetSilhouetteStatus(show_silhouette_);
   }
 }
 
 void ToonViewerApp::UpdateCreaseStatus() {
   // Update outline nodes
   for (auto node : outline_nodes_) {
-    node->SetCreaseStatus(showCrease);
+    node->SetCreaseStatus(show_crease_);
   }
 }
 
 void ToonViewerApp::UpdateBorderStatus() {
   // Update outline nodes
   for (auto node : outline_nodes_) {
-    node->SetBorderStatus(showBorder);
+    node->SetBorderStatus(show_border_);
   }
 }
 
@@ -179,7 +221,7 @@ void ToonViewerApp::UpdateOutlineThickness() {
 }
 
 void ToonViewerApp::UpdateOutlineMethod() {
-  OutlineMethod outlineMethod = useMiterJoins ? OutlineMethod::MITER : OutlineMethod::STANDARD;
+  OutlineMethod outlineMethod = use_miter_joins_ ? OutlineMethod::MITER : OutlineMethod::STANDARD;
   for (auto node : outline_nodes_) {
     node->SetOutlineMethod(outlineMethod);
   }
@@ -187,7 +229,7 @@ void ToonViewerApp::UpdateOutlineMethod() {
 
 void ToonViewerApp::UpdateMeshVisibility() {
   for (auto node : outline_nodes_) {
-    node->SetMeshVisibility(showMesh);
+    node->SetMeshVisibility(show_mesh_);
   }
 }
 
@@ -258,6 +300,70 @@ void ToonViewerApp::RenderImageToFile(const std::string filename,
   delete[] imageData;
 }
 
+void ToonViewerApp::SaveRenderSettings(const std::string filename) {
+  // TODO: have flags that control which batch of settings we end up writing.
+  std::string settingsDir = "presets";
+  CreateDirectoryIfNotExists(settingsDir);
+  std::string full_filename = "./" + settingsDir + "/" + filename + ".npr";
+  std::ofstream file(full_filename);
+  // .npr filetype is structured to have "commands" that group similar bits of information, where
+  // each command is terminated by "end". It allows for modular information, so you can specify only
+  // certain settings in an .npr file.
+  if (file.is_open()) {
+    // Colors commmand - records colors of scene
+    file << "colors\n";
+    file << "background"
+         << " " << floatVectorToString(background_color_) << "\n";
+    file << "illum"
+         << " " << floatVectorToString(illumination_color_) << "\n";
+    file << "shadow"
+         << " " << floatVectorToString(shadow_color_) << "\n";
+    file << "outline"
+         << " " << floatVectorToString(outline_color_) << "\n";
+    file << "end\n";
+    file << "\n";
+
+    // Shader Command - records shader-specific information
+    file << "shader\n";
+    file << "type"
+         << " " << shading_type_ << "\n";
+    file << "end\n";
+    file << "\n";
+
+    // Outlines Command - records information about outlines
+    file << "outlines\n";
+    file << "miter"
+         << " " << use_miter_joins_ << "\n";
+    file << "sil"
+         << " " << show_silhouette_ << "\n";
+    file << "crease"
+         << " " << show_crease_ << "\n";
+    file << "border"
+         << " " << show_border_ << "\n";
+    file << "width"
+         << " " << outline_thickness_ << "\n";
+    file << "thresh"
+         << " " << crease_threshold_ << "\n";
+    file << "end\n";
+    file << "\n";
+
+    // Mesh Command - records global mesh settings
+    file << "mesh\n";
+    file << "visible"
+         << " " << show_mesh_ << "\n";
+    file << "end\n";
+    file << "\n";
+
+    // Light Command - records global light settings
+    file << "light\n";
+    file << "type"
+         << " " << ((int)sun_node_->GetLightType()) << "\n";
+    file << "radius"
+         << " " << point_light_radius_ << "\n";
+    file << "end\n";
+  }
+}
+
 void ToonViewerApp::DrawGUI() {
   // Information for file rendering.
   const char* fileExtensions[] = {".png", ".jpg", ".bmp", ".tga"};
@@ -324,7 +430,7 @@ void ToonViewerApp::DrawGUI() {
   // Checkboxes for toggling edge type displays
   // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
   if (ImGui::CollapsingHeader("Edge Controls:")) {
-    if (ImGui::Checkbox("Use Miter Join Method (slow/experimental)", &useMiterJoins)) {
+    if (ImGui::Checkbox("Use Miter Join Method (slow/experimental)", &use_miter_joins_)) {
       UpdateOutlineMethod();
     }
     ImGui::Separator();
@@ -335,15 +441,15 @@ void ToonViewerApp::DrawGUI() {
     }
     ImGui::Separator();
 
-    if (ImGui::Checkbox("Draw Silhouette Edges", &showSilhouette)) {
+    if (ImGui::Checkbox("Draw Silhouette Edges", &show_silhouette_)) {
       UpdateSilhouetteStatus();
     }
 
-    if (ImGui::Checkbox("Draw Crease Edges", &showCrease)) {
+    if (ImGui::Checkbox("Draw Crease Edges", &show_crease_)) {
       UpdateCreaseStatus();
     }
 
-    if (ImGui::Checkbox("Draw Border Edges", &showBorder)) {
+    if (ImGui::Checkbox("Draw Border Edges", &show_border_)) {
       UpdateBorderStatus();
     }
     ImGui::Separator();
@@ -357,13 +463,14 @@ void ToonViewerApp::DrawGUI() {
 
   // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
   if (ImGui::CollapsingHeader("Mesh Controls:")) {
-    if (ImGui::Checkbox("Show Mesh", &showMesh)) {
+    if (ImGui::Checkbox("Show Mesh", &show_mesh_)) {
       UpdateMeshVisibility();
     }
   }
 
   // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
   if (ImGui::CollapsingHeader("File Controls:")) {
+    // Image saving dialog
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .2f);
     if (ImGui::Button("Save Image")) {
       renderingImageCountdown = 3;
@@ -376,11 +483,33 @@ void ToonViewerApp::DrawGUI() {
 
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .4f);
     ImGui::SameLine();
+    // Static render variables defined at beginning of function
+    ImGui::PushID("Image Filename Label");
     ImGui::InputTextWithHint(/*label = */ "", "filename", renderFilename,
                              IM_ARRAYSIZE(renderFilename));
+    ImGui::PopID();
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .15f);
     ImGui::Combo("format", &item_current, fileExtensions, IM_ARRAYSIZE(fileExtensions));
+
+    // Preset Saving Dialog
+    static char settingsFilename[512];
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .3f);
+    if (ImGui::Button("Save Settings")) {
+      SaveRenderSettings(settingsFilename);
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::BeginTooltip();
+      ImGui::Text("Saves in presets/ folder of working directory.");
+      ImGui::EndTooltip();
+    }
+
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .5f);
+    ImGui::SameLine();
+    ImGui::PushID("Settings Filename Label");
+    ImGui::InputTextWithHint(/*label = */ "", "filename", settingsFilename,
+                             IM_ARRAYSIZE(settingsFilename));
+    ImGui::PopID();
   }
 
   ImGui::End();

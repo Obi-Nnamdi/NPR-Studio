@@ -12,7 +12,9 @@ class SunNode : public SceneNode {
 
   void Update(double delta_time) override;
   void ToggleLight();  // switches between directional "full" light and point light
+  void SetLightType(LightType light_type);  // Only supports directional and point light
   void SetRadius(float radius);
+  LightType GetLightType() const;
   // Intensity is a value between 0 and 1
   void SetIntensity(float intensity);
 

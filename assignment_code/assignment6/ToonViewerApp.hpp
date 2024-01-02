@@ -38,11 +38,13 @@ class ToonViewerApp : public Application {
                                     float outlineFactor = 1);
 
   void RenderImageToFile(const std::string filename, const std::string extension) const;
-  bool showSilhouette = true;
-  bool showCrease = true;
-  bool showBorder = true;
-  bool useMiterJoins = false;
-  bool showMesh = true;
+  void SaveRenderSettings(const std::string filename);  // saves in /presets folder
+
+  bool show_silhouette_ = true;
+  bool show_crease_ = true;
+  bool show_border_ = true;
+  bool use_miter_joins_ = false;
+  bool show_mesh_ = true;
   // Control for getting screenshots from renderer
   // TODO do this in a less hacky way (do rendering to a texture?)
   int renderingImageCountdown = -1;

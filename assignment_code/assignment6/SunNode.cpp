@@ -22,18 +22,24 @@ SunNode::SunNode() : time_elapsed_(0.0f) {
 void SunNode::UpdatePosition(const glm::vec3& position) { GetTransform().SetPosition(position); }
 
 void SunNode::ToggleLight() {
-  RemoveComponent<LightComponent>();
-  // Toggle activated light variable
-  activated_light_ =
-      activated_light_ == LightType::Directional ? LightType::Point : LightType::Directional;
+  // Toggle activated light variable, and populate LightComponent with other light
+  SetLightType(activated_light_ == LightType::Directional ? LightType::Point
+                                                          : LightType::Directional);
+}
 
-  // Populate LightComponent with other light
+void SunNode::SetLightType(LightType light_type) {
+  activated_light_ = light_type;
+
+  // Populate LightComponent with light
+  RemoveComponent<LightComponent>();
   if (activated_light_ == LightType::Directional) {
     CreateComponent<LightComponent>(directional_light_);
   } else {
     CreateComponent<LightComponent>(point_light_);
   }
 }
+
+LightType SunNode::GetLightType() const { return activated_light_; }
 
 void SunNode::SetRadius(float radius) { point_light_->SetAttenuation(glm::vec3(1 / radius)); }
 
