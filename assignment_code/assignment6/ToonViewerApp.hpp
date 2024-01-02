@@ -60,6 +60,7 @@ class ToonViewerApp : public Application {
   float outline_thickness_ = 4;  // in pixels
   float point_light_radius_ = 1 / .15;
   std::vector<float> background_color_;  // rbga 4-vector list of background color
+  // rgb 3-vector lists
   std::vector<float> illumination_color_;
   std::vector<float> shadow_color_;
   std::vector<float> outline_color_;

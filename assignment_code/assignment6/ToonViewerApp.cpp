@@ -513,14 +513,11 @@ void ToonViewerApp::DrawGUI() {
   }
 
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
-  // Use ImGUI::SameLine to add multiple items next to each other
-  ImGui::ShowDemoWindow();
+  // ImGui::ShowDemoWindow();
 
   ImGui::Begin("Rendering Controls");
 
-  // Use SetNextItemOpen() so set the default state of a node to be open. We could
-  // also use TreeNodeEx() with the ImGuiTreeNodeFlags_DefaultOpen flag to achieve the
-  // same thing! ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+  // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
   if (ImGui::CollapsingHeader("Lighting Controls:")) {
     // Button for toggling light visibility
     if (ImGui::Button("Toggle Light Type (Point/Directional)")) {
