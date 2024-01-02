@@ -39,7 +39,10 @@ class ToonViewerApp : public Application {
                                     float outlineFactor = 1);
 
   void RenderImageToFile(const std::string filename, const std::string extension) const;
-  void SaveRenderSettings(const std::string filename);  // saves in /presets folder
+  void SaveRenderSettings(const std::string filename, const bool& includeColorInfo = true,
+                          const bool& includeLightInfo = true, const bool& includeMeshInfo = true,
+                          const bool& includeOutlineInfo = true,
+                          const bool& includeShaderInfo = true);  // saves in /presets folder
   void LoadRenderSettings(const std::string filename);  // loads from /presets folder
 
   // GUI variables

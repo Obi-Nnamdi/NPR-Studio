@@ -304,7 +304,10 @@ void ToonViewerApp::RenderImageToFile(const std::string filename,
   delete[] imageData;
 }
 
-void ToonViewerApp::SaveRenderSettings(const std::string filename) {
+void ToonViewerApp::SaveRenderSettings(const std::string filename, const bool& includeColorInfo,
+                                       const bool& includeLightInfo, const bool& includeMeshInfo,
+                                       const bool& includeOutlineInfo,
+                                       const bool& includeShaderInfo) {
   // TODO: have flags that control which batch of settings we end up writing.
   std::string settingsDir = "presets";
   CreateDirectoryIfNotExists(settingsDir);
@@ -315,56 +318,62 @@ void ToonViewerApp::SaveRenderSettings(const std::string filename) {
   // certain settings in an .npr file.
   if (file.is_open()) {
     // Colors commmand - records colors of scene
-    file << "colors\n";
-    file << "background"
-         << " " << floatVectorToString(background_color_) << "\n";
-    file << "illum"
-         << " " << floatVectorToString(illumination_color_) << "\n";
-    file << "shadow"
-         << " " << floatVectorToString(shadow_color_) << "\n";
-    file << "outline"
-         << " " << floatVectorToString(outline_color_) << "\n";
-    file << "end\n";
-    file << "\n";
-
-    // Shader Command - records shader-specific information
-    file << "shader\n";
-    file << "type"
-         << " " << shading_type_ << "\n";
-    file << "end\n";
-    file << "\n";
-
+    if (includeColorInfo) {
+      file << "colors\n";
+      file << "background"
+           << " " << floatVectorToString(background_color_) << "\n";
+      file << "illum"
+           << " " << floatVectorToString(illumination_color_) << "\n";
+      file << "shadow"
+           << " " << floatVectorToString(shadow_color_) << "\n";
+      file << "outline"
+           << " " << floatVectorToString(outline_color_) << "\n";
+      file << "end\n";
+      file << "\n";
+    }
+    if (includeShaderInfo) {
+      // Shader Command - records shader-specific information
+      file << "shader\n";
+      file << "type"
+           << " " << shading_type_ << "\n";
+      file << "end\n";
+      file << "\n";
+    }
     // Outlines Command - records information about outlines
-    file << "outlines\n";
-    file << "miter"
-         << " " << use_miter_joins_ << "\n";
-    file << "sil"
-         << " " << show_silhouette_ << "\n";
-    file << "crease"
-         << " " << show_crease_ << "\n";
-    file << "border"
-         << " " << show_border_ << "\n";
-    file << "width"
-         << " " << outline_thickness_ << "\n";
-    file << "thresh"
-         << " " << crease_threshold_ << "\n";
-    file << "end\n";
-    file << "\n";
-
+    if (includeOutlineInfo) {
+      file << "outlines\n";
+      file << "miter"
+           << " " << use_miter_joins_ << "\n";
+      file << "sil"
+           << " " << show_silhouette_ << "\n";
+      file << "crease"
+           << " " << show_crease_ << "\n";
+      file << "border"
+           << " " << show_border_ << "\n";
+      file << "width"
+           << " " << outline_thickness_ << "\n";
+      file << "thresh"
+           << " " << crease_threshold_ << "\n";
+      file << "end\n";
+      file << "\n";
+    }
     // Mesh Command - records global mesh settings
-    file << "mesh\n";
-    file << "visible"
-         << " " << show_mesh_ << "\n";
-    file << "end\n";
-    file << "\n";
-
+    if (includeMeshInfo) {
+      file << "mesh\n";
+      file << "visible"
+           << " " << show_mesh_ << "\n";
+      file << "end\n";
+      file << "\n";
+    }
     // Light Command - records global light settings
-    file << "light\n";
-    file << "type"
-         << " " << ((int)sun_node_->GetLightType()) << "\n";
-    file << "radius"
-         << " " << point_light_radius_ << "\n";
-    file << "end\n";
+    if (includeLightInfo) {
+      file << "light\n";
+      file << "type"
+           << " " << ((int)sun_node_->GetLightType()) << "\n";
+      file << "radius"
+           << " " << point_light_radius_ << "\n";
+      file << "end\n";
+    }
   }
 }
 
@@ -482,6 +491,8 @@ void ToonViewerApp::LoadRenderSettings(const std::string filename) {
         }
       }
     }
+  } else {
+    std::cerr << "Error loading preset file " << full_filename << std::endl;
   }
 }
 
@@ -503,7 +514,7 @@ void ToonViewerApp::DrawGUI() {
 
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   // Use ImGUI::SameLine to add multiple items next to each other
-  // ImGui::ShowDemoWindow();
+  ImGui::ShowDemoWindow();
 
   ImGui::Begin("Rendering Controls");
 
@@ -615,9 +626,18 @@ void ToonViewerApp::DrawGUI() {
 
     // Preset Saving Dialog
     static char saveSettingsFilename[512];
+    static bool includeColorInfo = true;
+    static bool includeLightInfo = true;
+    static bool includeMeshInfo = true;
+    static bool includeOutlineInfo = true;
+    static bool includeShaderInfo = true;
+    static const std::vector<bool*> allSaveSettings = {&includeColorInfo, &includeLightInfo,
+                                                       &includeMeshInfo, &includeOutlineInfo,
+                                                       &includeShaderInfo};
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .3f);
     if (ImGui::Button("Save Settings")) {
-      SaveRenderSettings(saveSettingsFilename);
+      SaveRenderSettings(saveSettingsFilename, includeColorInfo, includeLightInfo, includeMeshInfo,
+                         includeOutlineInfo, includeShaderInfo);
     }
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
@@ -631,6 +651,33 @@ void ToonViewerApp::DrawGUI() {
     ImGui::InputTextWithHint(/*label = */ "", "filename", saveSettingsFilename,
                              IM_ARRAYSIZE(saveSettingsFilename));
     ImGui::PopID();
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("Settings to save:");
+    ImGui::SameLine();
+    if (ImGui::Button("Select All")) {
+      for (auto setting : allSaveSettings) {
+        *setting = true;
+      }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Deselect All")) {
+      for (auto setting : allSaveSettings) {
+        *setting = false;
+      }
+    }
+    ImGui::Columns(3, "settings columns", false);
+    ImGui::Checkbox("Color Settings", &includeColorInfo);
+    ImGui::NextColumn();
+    ImGui::Checkbox("Edge Settings", &includeOutlineInfo);
+    ImGui::NextColumn();
+    ImGui::Checkbox("Light Settings", &includeLightInfo);
+    ImGui::NextColumn();
+    ImGui::Checkbox("Mesh Settings", &includeMeshInfo);
+    ImGui::NextColumn();
+    ImGui::Checkbox("Shader Settings", &includeShaderInfo);
+    ImGui::NextColumn();
+    ImGui::Columns(1);
+    ImGui::Spacing();
 
     // Preset Loading Dialog
     static char loadSettingsFilename[512];
