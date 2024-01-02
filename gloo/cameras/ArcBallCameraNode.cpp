@@ -55,12 +55,15 @@ void ArcBallCameraNode::Update(double delta_time) {
     }
     DistanceZoom(InputManager::GetInstance().GetCursorPosition());
     prev_released = false;
-  } else if (InputManager::GetInstance().IsKeyPressed('A')) {
-    if (prev_released) {
-      ToggleAxes();
-    }
-    prev_released = false;
-  }  else {
+  }
+  // TODO: maybe make axes a GUI feature?
+  // else if (InputManager::GetInstance().IsKeyPressed('A')) {
+  //   if (prev_released) {
+  //     ToggleAxes();
+  //   }
+  //   prev_released = false;
+  // }
+  else {
     auto scroll = input_manager.FetchAndResetMouseScroll();
     if (scroll != 0.0) {
       DistanceZoom(-float(scroll) * 0.1f);
