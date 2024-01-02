@@ -37,7 +37,7 @@ class ToonViewerApp : public Application {
   void OverrideNPRColorsFromDiffuse(float illuminationFactor = 1.5, float shadowFactor = .5,
                                     float outlineFactor = 1);
 
-  void RenderImageToFile() const;
+  void RenderImageToFile(const std::string filename, const std::string extension) const;
   bool showSilhouette = true;
   bool showCrease = true;
   bool showBorder = true;

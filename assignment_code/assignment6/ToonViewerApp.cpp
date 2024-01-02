@@ -216,7 +216,8 @@ void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float
   }
 }
 
-void ToonViewerApp::RenderImageToFile() const {
+void ToonViewerApp::RenderImageToFile(const std::string filename,
+                                      const std::string extension) const {
   // Use glReadPixels to get image data from entire window, starting at its lower left corner.
   auto windowSize = GetWindowSize();
   auto width = windowSize.x;
@@ -230,33 +231,37 @@ void ToonViewerApp::RenderImageToFile() const {
   GL_CHECK(glReadPixels(lowerLeftCorner.x, lowerLeftCorner.y, width, height, GL_RGBA,
                         GL_UNSIGNED_INT_8_8_8_8_REV, imageData));
   // Note that byte order is weird unless you use GL_UNSIGNED_INT_8_8_8_8_REV
-  // Print image data
-  // for (int j = 0; j < height; j++) {   // rows
-  //   for (int i = 0; i < width; i++) {  // columns
-  //     auto pixelIndex = (j * width + i) * channels;
-  //     char output[200];
-  //     snprintf(output, 100, "rgba(%d, %d, %d, %d)", imageData[pixelIndex],
-  //              imageData[pixelIndex + 1], imageData[pixelIndex + 2], imageData[pixelIndex + 3]);
-  //     std::cout << output << std::endl;
-  //   }
-  // }
 
-  // Write image data to png
-  std::string filename = "./render.png";  // TODO make dynamic
-  int row_stride =
-      sizeof(uint8_t) * width * channels;  // distance between rows of image data (in bytes)
-  stbi_flip_vertically_on_write(true);     // Flip image vertically when writing for openGL
-  stbi_write_png_compression_level = 0;
-  stbi_write_png(filename.c_str(), width, height, channels, imageData, row_stride);
+  std::string full_filename = filename + extension;
+  // Write image data to file
+  stbi_flip_vertically_on_write(true);  // Flip image vertically when writing for openGL
+  if (extension == ".png") {
+    int row_stride =
+        sizeof(uint8_t) * width * channels;  // distance between rows of image data (in bytes)
+    stbi_write_png_compression_level = 0;    // max quality
+    stbi_write_png(full_filename.c_str(), width, height, channels, imageData, row_stride);
+  } else if (extension == ".jpg") {
+    int imageQuality = 100;  // max quality
+    stbi_write_jpg(full_filename.c_str(), width, height, channels, imageData, imageQuality);
+  } else if (extension == ".bmp") {
+    stbi_write_bmp(full_filename.c_str(), width, height, channels, imageData);
+  } else if (extension == ".tga") {
+    stbi_write_tga(full_filename.c_str(), width, height, channels, imageData);
+  }
 
   // Free imageData memory
   delete[] imageData;
 }
 
 void ToonViewerApp::DrawGUI() {
+  // Information for file rendering.
+  const char* fileExtensions[] = {".png", ".jpg", ".bmp", ".tga"};
+  static char renderFilename[512];
+  static int item_current = 0;
+
   // Special cases to hide GUI when we're taking a screenshot:
   if (renderingImageCountdown == 0) {
-    RenderImageToFile();
+    RenderImageToFile(renderFilename, fileExtensions[item_current]);
     renderingImageCountdown--;
     return;
   } else if (renderingImageCountdown > 0) {
@@ -266,7 +271,7 @@ void ToonViewerApp::DrawGUI() {
 
   // Dear ImGUI documentation at https://github.com/ocornut/imgui?tab=readme-ov-file#usage
   // Use ImGUI::SameLine to add multiple items next to each other
-  // ImGui::ShowDemoWindow();
+  ImGui::ShowDemoWindow();
 
   ImGui::Begin("Rendering Controls");
 
@@ -354,9 +359,23 @@ void ToonViewerApp::DrawGUI() {
 
   // ImGui::SetNextItemOpen(true, ImGuiCond_Once);
   if (ImGui::CollapsingHeader("File Controls:")) {
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .2f);
     if (ImGui::Button("Save Image")) {
       renderingImageCountdown = 3;
     }
+    if (ImGui::IsItemHovered()) {
+      ImGui::BeginTooltip();
+      ImGui::Text("Rendered file saves in working directory.");
+      ImGui::EndTooltip();
+    }
+
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .4f);
+    ImGui::SameLine();
+    ImGui::InputTextWithHint(/*label = */ "", "filename", renderFilename,
+                             IM_ARRAYSIZE(renderFilename));
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .15f);
+    ImGui::Combo("filetype", &item_current, fileExtensions, IM_ARRAYSIZE(fileExtensions));
   }
 
   ImGui::End();
