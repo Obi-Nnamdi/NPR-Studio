@@ -48,6 +48,10 @@ void Renderer::SetRenderingOptions() const {
   GL_CHECK(glEnable(GL_DEPTH_TEST));
   GL_CHECK(glDepthFunc(GL_LEQUAL));
 
+  // Make sure multisampling is turned on
+  // TODO: Not turned on right now because the shaders themselves aren't anti-aliased
+  // glEnable(GL_MULTISAMPLE);
+
   // Enable blending for multi-pass forward rendering.
   GL_CHECK(glEnable(GL_BLEND));
   GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
