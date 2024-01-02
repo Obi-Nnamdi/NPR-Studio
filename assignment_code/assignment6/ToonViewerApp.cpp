@@ -234,19 +234,24 @@ void ToonViewerApp::RenderImageToFile(const std::string filename,
 
   std::string full_filename = filename + extension;
   // Write image data to file
+  int success = 0;
   stbi_flip_vertically_on_write(true);  // Flip image vertically when writing for openGL
   if (extension == ".png") {
     int row_stride =
         sizeof(uint8_t) * width * channels;  // distance between rows of image data (in bytes)
     stbi_write_png_compression_level = 0;    // max quality
-    stbi_write_png(full_filename.c_str(), width, height, channels, imageData, row_stride);
+    success = stbi_write_png(full_filename.c_str(), width, height, channels, imageData, row_stride);
   } else if (extension == ".jpg") {
-    int imageQuality = 100;  // max quality
-    stbi_write_jpg(full_filename.c_str(), width, height, channels, imageData, imageQuality);
+    int quality = 100;  // max quality
+    success = stbi_write_jpg(full_filename.c_str(), width, height, channels, imageData, quality);
   } else if (extension == ".bmp") {
-    stbi_write_bmp(full_filename.c_str(), width, height, channels, imageData);
+    success = stbi_write_bmp(full_filename.c_str(), width, height, channels, imageData);
   } else if (extension == ".tga") {
-    stbi_write_tga(full_filename.c_str(), width, height, channels, imageData);
+    success = stbi_write_tga(full_filename.c_str(), width, height, channels, imageData);
+  }
+
+  if (success == 0) {  // failure to write file
+    std::cerr << "ERROR: Image saving operation failed!" << std::endl;
   }
 
   // Free imageData memory
@@ -375,7 +380,7 @@ void ToonViewerApp::DrawGUI() {
                              IM_ARRAYSIZE(renderFilename));
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .15f);
-    ImGui::Combo("filetype", &item_current, fileExtensions, IM_ARRAYSIZE(fileExtensions));
+    ImGui::Combo("format", &item_current, fileExtensions, IM_ARRAYSIZE(fileExtensions));
   }
 
   ImGui::End();
