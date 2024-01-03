@@ -5,6 +5,7 @@
 #include "gloo/Material.hpp"
 #include "gloo/MeshLoader.hpp"
 #include "gloo/SceneNode.hpp"
+#include "gloo/cameras/ArcBallCameraNode.hpp"
 #include "gloo/components/MaterialComponent.hpp"
 #include "gloo/components/RenderingComponent.hpp"
 #include "gloo/components/ShadingComponent.hpp"
@@ -215,6 +216,7 @@ void OutlineNode::SetOutlineThickness(const float& width) {
 void OutlineNode::SetOutlineMethod(OutlineMethod method) { outline_method_ = method; }
 
 void OutlineNode::SetMeshVisibility(bool visible) { mesh_node_->SetActive(visible); }
+void OutlineNode::SetPerformanceModeStatus(bool enabled) { enable_performance_mode_ = enabled; }
 
 void OutlineNode::CalculateFaceDirections() {
   // TODO: this is treated as an orthographic projection, try doing this with persepctive projection
@@ -235,13 +237,9 @@ void OutlineNode::CalculateFaceDirections() {
 }
 
 void OutlineNode::Update(double delta_time) {
-  // Reset Polyline edge nodes
-  // TODO: you can do better here but for now this is fine
-  for (auto& polylineNode : polyline_nodes_) {
-    polylineNode->SetActive(false);
-    // polylineNode->~SceneNode();
-  }
-  // std::cout << "Children: " << GetChildrenCount() << std::endl;
+  // TODO: Don't need to update anything if the camera isn't moving, except for the first time when
+  // the camera stops (e.g. for miter joins).
+
   // On each frame, recaclulate the silhouette edges and draw all update edges
   // Only recalculate silhouette edges when we're displaying them
   if (show_silhouette_edges_) {
@@ -251,6 +249,12 @@ void OutlineNode::Update(double delta_time) {
 }
 
 void OutlineNode::RenderEdges() {
+  // Find out if camera is moving
+  auto camera_pointer = parent_scene_->GetActiveCameraPtr();
+  // TODO: Static casting to an ArcBallCameraNode may cause problems when changing camera types
+  bool isCameraMoving = static_cast<ArcBallCameraNode*>(camera_pointer->GetNodePtr())->IsMoving();
+  // std::cout << "Is Moving: " << (isCameraMoving ? "true" : "false") << std::endl;
+
   auto newIndices = make_unique<IndexArray>();
   // Render miter join edges in passes
   auto renderedSilhouetteEdges = std::vector<Edge>();
@@ -266,7 +270,9 @@ void OutlineNode::RenderEdges() {
       if ((info.is_silhouette && show_silhouette_edges_) ||
           (info.is_border && show_border_edges_) || (info.is_crease && show_crease_edges_)) {
         // Toggle between rendering with miter joins and "fast" edge rendering
-        if (outline_method_ == OutlineMethod::STANDARD) {
+        // In performance mode, only render miter joins when the camera isn't moving
+        if (outline_method_ == OutlineMethod::STANDARD ||
+            (isCameraMoving && enable_performance_mode_)) {
           newIndices->push_back(edge.first);
           newIndices->push_back(edge.second);
         } else if (outline_method_ == OutlineMethod::MITER) {
@@ -283,6 +289,12 @@ void OutlineNode::RenderEdges() {
         }
       }
     }
+  }
+
+  // Reset Polyline edge nodes
+  // TODO: you can do better here but for now this is fine
+  for (auto& polylineNode : polyline_nodes_) {
+    polylineNode->SetActive(false);
   }
 
   // Render polylines if we're doing the miter join method

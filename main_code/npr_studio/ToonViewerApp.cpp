@@ -235,6 +235,12 @@ void ToonViewerApp::UpdateOutlineMethod() {
   }
 }
 
+void ToonViewerApp::UpdatePerformanceModeStatus() {
+  ApplyFuncToOutlineNodes([this](OutlineNode* node) {
+    node->SetPerformanceModeStatus(this->enable_outline_performance_mode_);
+  });
+}
+
 void ToonViewerApp::UpdateMeshVisibility() {
   for (auto node : outline_nodes_) {
     node->SetMeshVisibility(show_mesh_);
@@ -263,6 +269,12 @@ void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float
                                                  float outlineFactor) {
   for (auto node : outline_nodes_) {
     node->OverrideNPRColorsFromDiffuse(illuminationFactor, shadowFactor, outlineFactor);
+  }
+}
+
+void ToonViewerApp::ApplyFuncToOutlineNodes(const std::function<void(OutlineNode*)>& func) {
+  for (auto node : outline_nodes_) {
+    func(node);
   }
 }
 
@@ -346,6 +358,7 @@ void ToonViewerApp::SaveRenderSettings(const std::string filename, const bool& i
       file << "outlines\n";
       file << "miter"
            << " " << use_miter_joins_ << "\n";
+      // TODO: Include performance mode info?
       file << "sil"
            << " " << show_silhouette_ << "\n";
       file << "crease"
@@ -562,6 +575,14 @@ void ToonViewerApp::DrawGUI() {
   if (ImGui::CollapsingHeader("Edge Controls:")) {
     if (ImGui::Checkbox("Use Miter Join Method (slow/experimental)", &use_miter_joins_)) {
       UpdateOutlineMethod();
+    }
+    if (ImGui::Checkbox("Performance Mode", &enable_outline_performance_mode_)) {
+      UpdatePerformanceModeStatus();
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::BeginTooltip();
+      ImGui::Text("Renders scene without Miter Joins when camera is moving.");
+      ImGui::EndTooltip();
     }
     ImGui::Separator();
 

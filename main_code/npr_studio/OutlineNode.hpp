@@ -89,6 +89,8 @@ class OutlineNode : public SceneNode {
   void SetOutlineMethod(OutlineMethod method);
   // Set mesh visibilty
   void SetMeshVisibility(bool visible);
+  // Set Performance Mode status
+  void SetPerformanceModeStatus(bool enabled);
 
  private:
   void SetupEdgeMaps();
@@ -119,9 +121,11 @@ class OutlineNode : public SceneNode {
   bool show_silhouette_edges_ = true;
   bool show_border_edges_ = true;
   bool show_crease_edges_ = true;
+  bool enable_performance_mode_ = false;  // TODO should this just be another OutlineMethod?
   OutlineMethod outline_method_ = STANDARD;
 
-  const float line_bias_ = 0.001 / 2;  // TODO maybe change this for miter joins?
+  const float line_bias_ =
+      0.001 / 2;  // Controls distance from mesh that outlines are rendered from
   float crease_threshold_ = glm::radians(30.f);
   const Scene *parent_scene_;
 };

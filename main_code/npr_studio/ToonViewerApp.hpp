@@ -30,6 +30,7 @@ class ToonViewerApp : public Application {
   void UpdateCreaseThreshold();
   void UpdateOutlineThickness();
   void UpdateOutlineMethod();
+  void UpdatePerformanceModeStatus();
   void UpdateMeshVisibility();
   void SetIlluminatedColor(const glm::vec3& color);
   void SetShadowColor(const glm::vec3& color);
@@ -37,6 +38,8 @@ class ToonViewerApp : public Application {
 
   void OverrideNPRColorsFromDiffuse(float illuminationFactor = 1.5, float shadowFactor = .5,
                                     float outlineFactor = 1);
+  // Applies a general function to all Application's outline nodes
+  void ApplyFuncToOutlineNodes(const std::function<void(OutlineNode*)>& func);
 
   void RenderImageToFile(const std::string filename, const std::string extension) const;
   void SaveRenderSettings(const std::string filename, const bool& includeColorInfo = true,
@@ -52,6 +55,7 @@ class ToonViewerApp : public Application {
   bool show_border_ = true;
   bool use_miter_joins_ = false;
   bool show_mesh_ = true;
+  bool enable_outline_performance_mode_ = false;
   // Control for getting screenshots from renderer
   // TODO do this in a less hacky way (do rendering to a texture?)
   int renderingImageCountdown = -1;

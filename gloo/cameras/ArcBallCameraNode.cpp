@@ -31,19 +31,27 @@ void ArcBallCameraNode::Calibrate() {
 }
 
 void ArcBallCameraNode::Update(double delta_time) {
+  is_moving = false;
   UpdateViewport();
 
   auto& input_manager = InputManager::GetInstance();
-
-  static bool prev_released = true;
-
+  static bool prev_released = false;
   if (input_manager.IsMiddleMousePressed()) {
     if (prev_released) {
       mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
     }
     PlaneTranslation(InputManager::GetInstance().GetCursorPosition());
     prev_released = false;
+  } else if (input_manager.IsLeftMousePressed() &&
+             input_manager.IsKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
+    // TOOD: Weird behavior when shift key is released before left mouse
+    if (prev_released) {
+      mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
+    }
+    PlaneTranslation(InputManager::GetInstance().GetCursorPosition());
+    prev_released = false;
   } else if (input_manager.IsLeftMousePressed()) {
+    // TOOD: Weird behavior when shift key is pressed while moving left mouse
     if (prev_released) {
       mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
     }
@@ -81,6 +89,7 @@ void ArcBallCameraNode::Update(double delta_time) {
   GetComponentPtr<CameraComponent>()->SetViewMatrix(std::move(V));
 }
 
+bool ArcBallCameraNode::IsMoving() { return is_moving; }
 void ArcBallCameraNode::UpdateViewport() {
   glm::ivec2 window_size = InputManager::GetInstance().GetWindowSize();
   float aspect_ratio =
@@ -89,6 +98,7 @@ void ArcBallCameraNode::UpdateViewport() {
 }
 
 void ArcBallCameraNode::ArcBallRotation(glm::dvec2 pos) {
+  is_moving = true;
   float sx, sy, sz, ex, ey, ez;
   float scale;
   float sl, el;
@@ -154,6 +164,7 @@ void ArcBallCameraNode::ArcBallRotation(glm::dvec2 pos) {
 }
 
 void ArcBallCameraNode::PlaneTranslation(glm::dvec2 pos) {
+  is_moving = true;
   // compute "distance" of image plane (wrt projection matrix)
   glm::ivec2 window_size = InputManager::GetInstance().GetWindowSize();
   float d = static_cast<float>(window_size.y) / 2.0f /
@@ -183,6 +194,7 @@ void ArcBallCameraNode::DistanceZoom(glm::dvec2 pos) {
 }
 
 void ArcBallCameraNode::DistanceZoom(float delta) {
+  is_moving = true;
   distance_ = start_distance_ * exp(delta);
 }
 

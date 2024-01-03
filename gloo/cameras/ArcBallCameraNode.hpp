@@ -14,6 +14,7 @@ class ArcBallCameraNode : public SceneNode {
   void Update(double delta_time) override;
 
   void Calibrate();
+  bool IsMoving();
 
  private:
   void UpdateViewport();
@@ -23,6 +24,7 @@ class ArcBallCameraNode : public SceneNode {
   void DistanceZoom(float delta);
   void PlotAxes();
   void ToggleAxes();
+  bool is_moving = false;
 
   float fov_;
   float distance_;
