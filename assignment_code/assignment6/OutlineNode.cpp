@@ -132,10 +132,15 @@ void OutlineNode::ChangeMeshShader(ToonShadingType shadingType) {
 }
 
 void OutlineNode::ChangeMeshShader(std::shared_ptr<ShaderProgram> shader) {
+  // Make sure that the mesh is always active before changing colors
+  auto isActiveOld = mesh_node_->IsActive();
+  SetMeshVisibility(true);
+
   // Directly substitute mesh shader for given shader
-  // TODO: bug when changing mesh shader when mesh is inactive.
   mesh_shader_ = shader;
   mesh_node_->GetComponentPtr<ShadingComponent>()->SetShader(mesh_shader_);
+
+  SetMeshVisibility(isActiveOld);
 }
 
 void OutlineNode::SetCreaseThreshold(float degrees) {
@@ -144,17 +149,30 @@ void OutlineNode::SetCreaseThreshold(float degrees) {
 }
 
 void OutlineNode::SetIlluminatedColor(const glm::vec3& color) {
+  // Make sure that the mesh is always active before changing colors
+  auto isActiveOld = mesh_node_->IsActive();
+  SetMeshVisibility(true);
+
   auto material = mesh_node_->GetComponentPtr<MaterialComponent>()->GetMaterial();
   material.SetIlluminatedColor(color);
   mesh_node_->GetComponentPtr<MaterialComponent>()->SetMaterial(
       std::make_shared<Material>(material));
+  // Reset active state to old value
+  SetMeshVisibility(isActiveOld);
 }
 
 void OutlineNode::SetShadowColor(const glm::vec3& color) {
+  // Make sure that the mesh is always active before changing colors
+  auto isActiveOld = mesh_node_->IsActive();
+  SetMeshVisibility(true);
+
   auto material = mesh_node_->GetComponentPtr<MaterialComponent>()->GetMaterial();
   material.SetShadowColor(color);
   mesh_node_->GetComponentPtr<MaterialComponent>()->SetMaterial(
       std::make_shared<Material>(material));
+
+  // Reset active state to old value
+  SetMeshVisibility(isActiveOld);
 }
 
 void OutlineNode::SetOutlineColor(const glm::vec3& color) {
