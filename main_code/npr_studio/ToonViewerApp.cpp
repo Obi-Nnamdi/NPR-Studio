@@ -1,6 +1,10 @@
 #include "ToonViewerApp.hpp"
 
 #include <sys/stat.h>
+// Include windows header if we're on windows
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include <fstream>
 #include <glm/ext/matrix_transform.hpp>
