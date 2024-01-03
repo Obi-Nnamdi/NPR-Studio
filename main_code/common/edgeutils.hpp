@@ -56,37 +56,68 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
  * the resulting `paths` array.
  *
  * @param paths: The vector of polylines to be split.
- * @param max_size: The maximum size of a polyline. Must be > 0.
+ * @param max_size: The maximum size of a polyline. Must be > 1.
+ *
+ * Function testing: test with max_size > pathSize, max_size < pathSize, max_size = pathSize
+ * For cylinder:  max_size = 4, 2, 32;
  */
 void splitPolylines(std::vector<Polyline>& paths, int max_size) {
   // Enforce precondition
-  if (max_size <= 0) {
-    throw std::runtime_error("max_size must be > 0");
+  if (max_size <= 1) {
+    throw std::runtime_error("max_size must be > 1");
   }
-
+  std::vector<Polyline> new_polylines;
+  // Split existing polylines
   for (auto& polyline : paths) {
-    if (polyline.path.size() > max_size) {
-      int num_splits = polyline.path.size() / max_size;
-      for (int i = 0; i < num_splits; i++) {
-        Polyline new_polyline;
-        new_polyline.path = std::vector<size_t>(polyline.path.begin() + i * max_size,
-                                                polyline.path.begin() + (i + 1) * max_size);
-        // If the polyline needed to have more than one split, then it's not a loop by definition.
-        // If no splits were necessary, just use the existing loop parameter.
-        new_polyline.is_loop = num_splits > 0 ? false : polyline.is_loop;
-        paths.push_back(new_polyline);
-        // Also add mini-polyline that connects the two polylines we just split ()
-        if (polyline.path.size() > (i + 1) * max_size) {
-          Polyline mini_polyline;
-          mini_polyline.path = {new_polyline.path.back(), polyline.path[(i + 1) * max_size]};
-          mini_polyline.is_loop = true;  // it's a loop by definition.
-          paths.push_back(mini_polyline);
-        }
+    int num_splits = polyline.path.size() / max_size;
+    // If the polyline needed to have more than one split, then it's not a loop by definition.
+    // If no splits were necessary, just use the existing loop value.
+    bool areSplitsLoops = num_splits > 0 ? false : polyline.is_loop;
+
+    // Iterate through polyline to split it, only stopping when we've reached the end of the array
+    long currentIndex = 0;
+    while ((currentIndex + max_size) <= polyline.path.size()) {
+      // Create a new polyline with vertices "max_size" starting at currentIndex.
+      Polyline new_polyline;
+      long beginning_index = currentIndex;
+      long end_index = beginning_index + max_size;
+      new_polyline.path = std::vector<size_t>(polyline.path.begin() + beginning_index,
+                                              polyline.path.begin() + end_index);
+      new_polyline.is_loop = areSplitsLoops;
+      new_polylines.push_back(new_polyline);
+      // Start the polyline one node "back" if we're going after the first split, just so we can
+      // capture the connection to the starting node.
+      currentIndex += (max_size - 1);
+    }
+    long remainingIndices = (polyline.path.size() - 1) - currentIndex;
+
+    // Add ending polyline segment original polyline based on splits we did
+    // Don't include polyline if its size would be 0 and the polyline isn't a loop.
+    if (remainingIndices > 0) {
+      Polyline end_segment;
+      end_segment.is_loop = areSplitsLoops;
+      end_segment.path =
+          std::vector<size_t>(polyline.path.begin() + currentIndex, polyline.path.end());
+
+      // If the polyline was a loop and we split it, add additional vertex that connects the
+      // original polyline head with its tail
+      auto lineHead = polyline.path.front();
+      if (polyline.is_loop && num_splits > 0) {
+        end_segment.path.push_back(lineHead);
       }
-      polyline.path =
-          std::vector<size_t>(polyline.path.begin() + num_splits * max_size, polyline.path.end());
+      new_polylines.push_back(end_segment);
+    } else if (remainingIndices == 0 && polyline.is_loop) {
+      // We've split the polylines exactly, so push a single line that connects the head to
+      // the tail.
+      Polyline end_segment;
+      end_segment.path = {polyline.path.front(), polyline.path.back()};
+      end_segment.is_loop = areSplitsLoops;  // line segment
+      new_polylines.push_back(end_segment);
     }
   }
+
+  // Replace our original paths with our new polylines
+  paths = new_polylines;
 }
 
 // Performs dfs on `node` using give adjList, but visits every edge instead of just visiting every
@@ -169,9 +200,7 @@ std::vector<Polyline> edgesToPolylines(const std::vector<Edge>& edges) {
   }
 
   // Split polylines into paths less than the maximum UBO array size defined in MiterOutlineShader.
-  // (prevents seg faulting when rendering)
-  // TODO: the sponza_low scene still errors when rendering a lot of lines due to a std::length
-  // error.
+  // (prevents seg faulting when rendering due to too many vertices in UBO buffer)
   int splitLength = (int)maxUBOArraySize - 10;
   if (splitLength <= 0) {
     throw std::runtime_error("Polyline split length <= 0. Adjust maxUBOArraySize");
