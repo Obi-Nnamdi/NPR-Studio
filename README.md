@@ -72,18 +72,19 @@ Run the following commands at the project's root directory:
 ```Shell
 mkdir build
 cd build
-cmake ..
+cmake ..  -DCMAKE_BUILD_TYPE=Release
 make
 ```
 #### Windows
 You can use CMake-GUI to generate the build system of your choice:
 1. Set the source code location ("Where is the source code") to the project's root directory
 2. Set the binary building location ("Where to build the binaries") to the root directory followed by build/.
-3. Click Configure. The default configuration should suffice.
-4. After configuring, click Generate. Choose the build system you like, i.e. Visual Studio 2019.
-5. The build system files should **be** in the build directory.
+3. Click "Configure". The default configuration should suffice.
+4. After configuring, click "Generate".
+5. The build system files should be in the build directory.
+6. Open the NPR_STUDIO.slr file with Visual Studio, and build the solution with the build type with the solution configuration set to "RELEASE".
 
-After building the project, you should see an executable in the build directory called "npr_studio". This is the application executable.
+After building the project, you should see an executable in the `build/Release` directory called "npr_studio". This is the application executable.
 
 ## Usage
 To open an .obj file for rendering, run the application executable in the command line with the following syntax:
