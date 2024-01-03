@@ -1,11 +1,11 @@
 # NPR Studio
 A lightweight real-time non-photorealistic renderer built with OpenGL. 
 
-This project started as the final project of MIT's 6.4400 - "Computer Graphics" course, but was extented afterwards.
+This project started as the final project of MIT's 6.4400 - "Computer Graphics" course but was extended afterward.
 
 ## Table of Contents
 
-| [Features](#features) - [Gallery](#gallery) -  [Installing](#installing) - [Running](#running) - [Project Writup](#project-writeup)| 
+| [Features](#features) - [Gallery](#gallery) -  [Installing](#installing) - [Usage](#usage) - [Project Writeup](#project-writeup)| 
 | :----------------------------------------------------------: |
 | [High-Level Code Organization](#high-level-code-organization) - [Editing Code](#editing-code) - [Credits](#credits) - [Dependencies](#dependencies)|
 
@@ -29,9 +29,10 @@ This project started as the final project of MIT's 6.4400 - "Computer Graphics" 
 ## Gallery
 | | |
 |--|--|
-|![dragon image](./assets/screenshots/dragon.png) | ![blue dragon image](./assets/screenshots/blue_eyes_white_dragon.png) 
-| ![bunny](./assets/screenshots/bunny.png) | ![box](./assets/screenshots/box.png)|
-| ![bunny](./assets/screenshots/shape_outlines.png) |![bunny](./assets/screenshots/temp_sphere.png)
+|![dragon image](./assets/screenshots/dragon.png) | ![blue dragon image](./assets/screenshots/blue_eyes_white_dragon.png) |
+| ![shape outlines](./assets/screenshots/shape_outlines.png)  | ![box](./assets/screenshots/box.png)|
+| ![bookshelf](assets/screenshots/bookshelf_blueprint.png)|![sphere](./assets/screenshots/temp_sphere.png) |
+| ![lamp](assets/screenshots/lamp.png) | ![bunny](./assets/screenshots/bunny.png) |
 
 ## Installing
 *(Section partially adapted from an MIT 6.4400 assignment handout)*
@@ -63,7 +64,7 @@ brew install cmake
 ```
 #### Windows
 1. Download the [CMake Windows installer](https://cmake.org/download/).
-2. Download newest version of Visual Studio (community version is free at https://visualstudio.microsoft.com/vs/), and install the necessary C++ tools through Visual Studio (or in your preferred way).
+2. Download the newest version of Visual Studio (the community version is free at https://visualstudio.microsoft.com/vs/), and install the necessary C++ tools through Visual Studio (or in your preferred way).
 
 ### Building
 #### Linux / MacOS
@@ -79,17 +80,23 @@ You can use CMake-GUI to generate the build system of your choice:
 1. Set the source code location ("Where is the source code") to the project's root directory
 2. Set the binary building location ("Where to build the binaries") to the root directory followed by build/.
 3. Click Configure. The default configuration should suffice.
-4. After configuring, click Generate. Choose the build system you like, i.e Visual Studio 2019.
+4. After configuring, click Generate. Choose the build system you like, i.e. Visual Studio 2019.
 5. The build system files should **be** in the build directory.
 
 After building the project, you should see an executable in the build directory called "npr_studio". This is the application executable.
 
-## Running
+## Usage
 To open an .obj file for rendering, run the application executable in the command line with the following syntax:
 
 ```Shell
 ./npr_studio <filename>
 ```
+
+The specified filename begins from the [`assets/models`](./assets/models/) directory and supports child folders. To render your own model, place it in that directory.
+
+For example, the [sponza palace](./assets/models/sponza_low) scene can be opened by running `./npr_studio sponza_low/sponza_norm.obj`.
+
+Rendered images and render presets will be in the `assets/renders` and `assets/presets` directories, respectively.
 
 If you don't specify a filename, a default mesh will be used for rendering.
 
@@ -97,7 +104,7 @@ If you don't specify a filename, a default mesh will be used for rendering.
 If you add files, be sure to rerun `cmake` running `make`.
 
 ## High-Level Code Organization
-The main entrypoint of this code is [`main`](./main_code/npr_studio/main.cpp), which calls [`ToonViewerApp`](./main_code/npr_studio/ToonViewerApp.hpp), which sets up the application and GUI.
+The main entry point of this code is [`main`](./main_code/npr_studio/main.cpp), which calls [`ToonViewerApp`](./main_code/npr_studio/ToonViewerApp.hpp), which sets up the application and GUI.
 
 When importing a mesh, `ToonViewerApp` creates [`OutlineNode`](./main_code/npr_studio/OutlineNode.hpp)s that handle rendering both the mesh itself and rendering its outlines.
 
@@ -114,7 +121,7 @@ Lighting is handled using [`SunNode`](./main_code/npr_studio/SunNode.hpp).
 Note that GLOO itself is structured similarly to Unity's scripting API.
 
 ## Project Writeup
-If you're interested in learning a bit behind the algorithms in the project, I've created a writeup for this project, found [here](https://www.mit.edu/~obin/2023-2024/Semester_1/6_4400/final_project/writeup.pdf). Currently, it only touches on the work I've done up to December 13, 2023 (Toon/Tone Shading + Basic (Non-Miter) Outline Rendering).
+If you're interested in learning a bit about the algorithms in the project, I've created a writeup for this project, found [here](https://www.mit.edu/~obin/2023-2024/Semester_1/6_4400/final_project/writeup.pdf). Currently, it only touches on the work I've done up to December 13, 2023 (Toon/Tone Shading + Basic (Non-Miter) Outline Rendering).
 
 
 ## Credits
