@@ -1,6 +1,5 @@
 #include "PolylineNode.hpp"
 
-#include "assignment_code/common/helpers.hpp"
 #include "gloo/Material.hpp"
 #include "gloo/MeshLoader.hpp"
 #include "gloo/SceneNode.hpp"
@@ -13,6 +12,7 @@
 #include "gloo/shaders/SimpleShader.hpp"
 #include "gloo/shaders/ToneMappingShader.hpp"
 #include "gloo/shaders/ToonShader.hpp"
+#include "main_code/common/helpers.hpp"
 namespace GLOO {
 
 PolylineNode::PolylineNode(const Polyline& polyline, const PositionArray& meshPositions,

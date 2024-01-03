@@ -6,8 +6,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include "../assignment6/OutlineNode.hpp"  // Includes polyline def.
 #include "../code/gloo/shaders/MiterOutlineShader.hpp"
+#include "../npr_studio/OutlineNode.hpp"  // Includes polyline def.
 
 namespace GLOO {
 

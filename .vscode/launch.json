@@ -8,7 +8,7 @@
             "type": "cppdbg",
             "request": "launch",
             "name": "Debug Scene",
-            "program": "${workspaceFolder}/build/assignment6",
+            "program": "${workspaceFolder}/build/npr_studio",
             "cwd": "${fileDirname}",
             "MIMode": "lldb"
         },
@@ -16,7 +16,7 @@
             "type": "cppdbg",
             "request": "launch",
             "name": "Debug MIT Text",
-            "program": "${workspaceFolder}/build/assignment6",
+            "program": "${workspaceFolder}/build/npr_studio",
             "args": ["mit_text.obj"],
             "cwd": "${fileDirname}",
             "MIMode": "lldb"

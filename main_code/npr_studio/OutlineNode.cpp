@@ -2,8 +2,6 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-#include "assignment_code/common/edgeutils.hpp"
-#include "assignment_code/common/helpers.hpp"
 #include "gloo/Material.hpp"
 #include "gloo/MeshLoader.hpp"
 #include "gloo/SceneNode.hpp"
@@ -16,6 +14,8 @@
 #include "gloo/shaders/SimpleShader.hpp"
 #include "gloo/shaders/ToneMappingShader.hpp"
 #include "gloo/shaders/ToonShader.hpp"
+#include "main_code/common/edgeutils.hpp"
+#include "main_code/common/helpers.hpp"
 
 namespace GLOO {
 OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject> mesh,

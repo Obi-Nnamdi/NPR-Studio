@@ -1,19 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
-project(6.837)
-set(ASSIGNMENT_ID "6")
-
-if (APPLE)
-    # Universal binaries to avoid Intel vs ARM Mac compatability issues
-    message(STATUS "For Macs, building universal binary for MAC OSX >= 11.0")
-    set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")
-endif()
-
-if (NOT DEFINED ASSIGNMENT_ID)
-    message(STATUS "No ASSIGNMENT_ID set; default to ASSIGNMENT_ID=0.")
-    set(ASSIGNMENT_ID "0")
-endif()
-message(STATUS "Building assignment ${ASSIGNMENT_ID}...")
+project(NPR_STUDIO)
+message(STATUS "Building NPR Studio...")
 
 # Otherwise IMGUI may pick GLEW as GL loader
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIMGUI_IMPL_OPENGL_LOADER_GLAD")
@@ -122,9 +109,9 @@ file(GLOB gloo_srcs
 
 ###################################################
 
-set(assignment_name "assignment${ASSIGNMENT_ID}")
-set(assignment_dir ${PROJECT_SOURCE_DIR}/assignment_code/${assignment_name})
-set(assignment_common_dir ${PROJECT_SOURCE_DIR}/assignment_code/common)
+set(assignment_name "npr_studio")
+set(assignment_dir ${PROJECT_SOURCE_DIR}/main_code/${assignment_name})
+set(assignment_common_dir ${PROJECT_SOURCE_DIR}/main_code/common)
 include_directories(${assignment_dir})
 include_directories(${assignment_common_dir})
 file(GLOB_RECURSE assignment_srcs
