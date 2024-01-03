@@ -122,9 +122,13 @@ void edgeDfs(size_t node, const std::unordered_map<size_t, std::unordered_set<si
       auto firstElt = currentPath.front();
       auto lastElt = currentPath.back();
       // We only consider loops if they're more than 2 nodes long (3-length cycles and up)
-      line.is_loop =
-          adjList.at(firstElt).count(lastElt) > 0 && currentPath.size() >= edge_cycle_length;
+      line.is_loop = firstElt == lastElt && currentPath.size() >= edge_cycle_length;
       line.path = currentPath;
+      // Remove the last element from the polyline if the line is a loop since it's the same as the
+      // first (allows for easier logic later)
+      if (line.is_loop) {
+        line.path.pop_back();
+      }
       paths.push_back(line);
     }
   }
