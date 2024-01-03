@@ -7,7 +7,7 @@
 
 namespace GLOO {
 MeshData MeshLoader::Import(const std::string& filename) {
-  std::string file_path = GetAssetDir() + filename;
+  std::string file_path = GetModelDir() + filename;
   bool success;
   auto parsed_data = ObjParser::Parse(file_path, success);
   if (!success) {

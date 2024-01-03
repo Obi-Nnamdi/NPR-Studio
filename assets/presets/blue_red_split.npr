@@ -1,0 +1,28 @@
+colors
+background 0.091297 0.0799692 0.127451 1
+illum 0.661765 0.0162197 0.0162197
+shadow 0.243745 0.0177336 0.401961
+outline 1 0.45098 0.45098
+end
+
+shader
+type 0
+end
+
+outlines
+miter 1
+sil 1
+crease 0
+border 0
+width 37.3
+thresh 30
+end
+
+mesh
+visible 1
+end
+
+light
+type 1
+radius 5.36
+end

@@ -278,7 +278,7 @@ void ToonViewerApp::RenderImageToFile(const std::string filename,
                         GL_UNSIGNED_INT_8_8_8_8_REV, imageData));
   // Note that byte order is weird unless you use GL_UNSIGNED_INT_8_8_8_8_REV
 
-  std::string full_filename = filename + extension;
+  std::string full_filename = GetRenderDir() + filename + extension;
   // Write image data to file
   int success = 0;
   stbi_flip_vertically_on_write(true);  // Flip image vertically when writing for openGL
@@ -308,10 +308,8 @@ void ToonViewerApp::SaveRenderSettings(const std::string filename, const bool& i
                                        const bool& includeLightInfo, const bool& includeMeshInfo,
                                        const bool& includeOutlineInfo,
                                        const bool& includeShaderInfo) {
-  // TODO: have flags that control which batch of settings we end up writing.
-  std::string settingsDir = "presets";
-  CreateDirectoryIfNotExists(settingsDir);
-  std::string full_filename = "./" + settingsDir + "/" + filename + ".npr";
+  CreateDirectoryIfNotExists(GetPresetDir());
+  std::string full_filename = GetPresetDir() + filename + ".npr";
   std::ofstream file(full_filename);
   // .npr filetype is structured to have "commands" that group similar bits of information, where
   // each command is terminated by "end". It allows for modular information, so you can specify only
@@ -378,8 +376,7 @@ void ToonViewerApp::SaveRenderSettings(const std::string filename, const bool& i
 }
 
 void ToonViewerApp::LoadRenderSettings(const std::string filename) {
-  std::string settingsDir = "presets";
-  std::string full_filename = "./" + settingsDir + "/" + filename + ".npr";
+  std::string full_filename = GetPresetDir() + filename + ".npr";
   std::ifstream file(full_filename);
   if (file.is_open()) {
     std::string line;
@@ -606,7 +603,7 @@ void ToonViewerApp::DrawGUI() {
     }
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
-      ImGui::Text("Rendered file saves in working directory.");
+      ImGui::Text("Saves in assets/renders/ folder of project.");
       ImGui::EndTooltip();
     }
 
@@ -638,7 +635,7 @@ void ToonViewerApp::DrawGUI() {
     }
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
-      ImGui::Text("Saves in presets/ folder of working directory.");
+      ImGui::Text("Saves in assets/presets/ folder of project.");
       ImGui::EndTooltip();
     }
 
@@ -684,7 +681,7 @@ void ToonViewerApp::DrawGUI() {
     }
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
-      ImGui::Text("Loads from presets/ folder of working directory. Don't include extension.");
+      ImGui::Text("Loads from assets/presets/ folder of project. Don't include extension.");
       ImGui::EndTooltip();
     }
 

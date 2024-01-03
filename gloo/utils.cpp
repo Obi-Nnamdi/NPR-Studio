@@ -68,4 +68,8 @@ std::string GetAssetDir() {
   return GetProjectRootDir() + "assets/";
 }
 
+std::string GetModelDir() { return GetAssetDir() + "models/"; }
+std::string GetRenderDir() { return GetAssetDir() + "renders/"; }
+std::string GetPresetDir() { return GetAssetDir() + "presets/"; }
+
 }  // namespace GLOO

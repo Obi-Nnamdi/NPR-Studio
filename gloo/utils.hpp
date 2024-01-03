@@ -49,6 +49,9 @@ std::string GetBasePath(const std::string& path);
 std::string GetProjectRootDir();
 std::string GetShaderGLSLDir();
 std::string GetAssetDir();
+std::string GetModelDir();
+std::string GetRenderDir();
+std::string GetPresetDir();
 
 // C++11 does not have make_unique sadly; it appeared in C++14.
 // MSVC already has make_unique defined.

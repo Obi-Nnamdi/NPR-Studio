@@ -1,0 +1,20 @@
+colors
+background 1e-06 9.95098e-07 9.95098e-07 1
+illum 0.779404 0.77941 0.779412
+shadow 1e-06 9.55882e-07 9.55882e-07
+outline 0.13514 0.211968 0.372549
+end
+
+shader
+type 0
+end
+
+outlines
+miter 1
+sil 1
+crease 0
+border 1
+width 16.7
+thresh 30
+end
+

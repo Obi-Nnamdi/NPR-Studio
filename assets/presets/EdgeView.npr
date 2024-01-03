@@ -1,0 +1,20 @@
+colors
+background 0 0 0 1
+illum 0 0 0
+shadow 0 0 0
+outline 1 1 1
+end
+
+outlines
+miter 0
+sil 1
+crease 1
+border 1
+width 4
+thresh 30
+end
+
+mesh
+visible 1
+end
+

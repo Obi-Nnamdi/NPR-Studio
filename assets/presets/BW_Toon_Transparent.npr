@@ -1,0 +1,11 @@
+colors
+background 0.240196 0.240194 0.240194 0
+illum 1 0.99999 0.99999
+shadow 1e-06 9.9999e-07 9.9999e-07
+outline 1e-06 9.9999e-07 9.9999e-07
+end
+
+shader
+type 0
+end
+
