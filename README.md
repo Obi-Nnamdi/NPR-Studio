@@ -114,11 +114,11 @@ Lighting is handled using [`SunNode`](./main_code/npr_studio/SunNode.hpp).
 Note that GLOO itself is structured similarly to Unity's scripting API.
 
 ## Project Writeup
-If you're interested in learning a bit behind the algorithms in the project, I've created a writeup for this project, found here (LINK PDF). Currently, it only touches on the work I've done up to December 13, 2023 (Toon/Tone Shading + Basic (Non-Miter) Outline Rendering).
+If you're interested in learning a bit behind the algorithms in the project, I've created a writeup for this project, found [here](https://www.mit.edu/~obin/2023-2024/Semester_1/6_4400/final_project/writeup.pdf). Currently, it only touches on the work I've done up to December 13, 2023 (Toon/Tone Shading + Basic (Non-Miter) Outline Rendering).
 
 
 ## Credits
-This application is built off of the library GLOO (openGL Object-Oriented), a lightweight object-oriented C++ library for interacting with OpenGL that was provided by MIT’s 6.4400 Course Staff (essentially all code from the first commit).
+This application is built off of the library `GLOO` (openGL Object-Oriented), a lightweight object-oriented C++ library for interacting with OpenGL that was provided by MIT’s 6.4400 Course Staff (includes essentially all code from the first commit that's not the `/external` directory).
 
 All NPR-specific code (stylized shaders, drawing outlines, application GUI, etc.) was created by Obi_Nnamdi.
 
