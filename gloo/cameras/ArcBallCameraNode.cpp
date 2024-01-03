@@ -1,16 +1,15 @@
 #include "ArcBallCameraNode.hpp"
 
+#include <glm/gtx/quaternion.hpp>
 #include <iostream>
 
-#include <glm/gtx/quaternion.hpp>
-
+#include "gloo/InputManager.hpp"
+#include "gloo/VertexObject.hpp"
 #include "gloo/components/CameraComponent.hpp"
+#include "gloo/components/MaterialComponent.hpp"
 #include "gloo/components/RenderingComponent.hpp"
 #include "gloo/components/ShadingComponent.hpp"
-#include "gloo/components/MaterialComponent.hpp"
-#include "gloo/InputManager.hpp"
 #include "gloo/shaders/SimpleShader.hpp"
-#include "gloo/VertexObject.hpp"
 
 namespace GLOO {
 ArcBallCameraNode::ArcBallCameraNode(float fov, float aspect, float distance)
@@ -36,33 +35,65 @@ void ArcBallCameraNode::Update(double delta_time) {
 
   auto& input_manager = InputManager::GetInstance();
   static bool prev_released = false;
-  if (input_manager.IsMiddleMousePressed()) {
+  // Controls that prevent orbiting/translating/zooming actions from happening simultaneously
+  static bool zooming = false;
+  static bool orbiting = false;
+  static bool translating = false;
+  // Debugging
+  // std::cout << "Translating: " << (translating ? "true" : "false") << std::endl;
+  // std::cout << "Orbiting: " << (orbiting ? "true" : "false") << std::endl;
+  // std::cout << "Zooming: " << (zooming ? "true" : "false") << std::endl;
+  // static double elapsed_time = 0;
+  // if (!(zooming || orbiting || translating)) {
+  //   std::cout << elapsed_time << ": No Action" << std::endl;
+  // }
+  // elapsed_time += delta_time;
+
+  // Translating Actions
+  if (input_manager.IsMiddleMousePressed() && !(orbiting || zooming)) {
     if (prev_released) {
       mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
     }
     PlaneTranslation(InputManager::GetInstance().GetCursorPosition());
     prev_released = false;
+    translating = true;
   } else if (input_manager.IsLeftMousePressed() &&
-             input_manager.IsKeyPressed(GLFW_KEY_LEFT_SHIFT)) {
-    // TOOD: Weird behavior when shift key is released before left mouse
+             input_manager.IsKeyPressed(GLFW_KEY_LEFT_SHIFT) && !(orbiting || zooming)) {
     if (prev_released) {
       mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
     }
     PlaneTranslation(InputManager::GetInstance().GetCursorPosition());
     prev_released = false;
+    translating = true;
   } else if (input_manager.IsLeftMousePressed()) {
-    // TOOD: Weird behavior when shift key is pressed while moving left mouse
-    if (prev_released) {
-      mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
+    // Continue translating action if we let go of shift
+    if (translating) {
+      if (prev_released) {
+        mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
+      }
+      PlaneTranslation(InputManager::GetInstance().GetCursorPosition());
+      prev_released = false;
+      translating = true;
     }
-    ArcBallRotation(InputManager::GetInstance().GetCursorPosition());
-    prev_released = false;
-  } else if (input_manager.IsRightMousePressed()) {
+    // Orbiting Action
+    else if (!(translating || zooming)) {
+      // TOOD: Weird behavior when shift key is pressed while moving left mouse
+      if (prev_released) {
+        mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
+      }
+      ArcBallRotation(InputManager::GetInstance().GetCursorPosition());
+      prev_released = false;
+      orbiting = true;
+    }
+  }
+  // Zooming Actions
+  else if (input_manager.IsRightMousePressed() && !(translating || orbiting)) {
     if (prev_released) {
       mouse_start_click_ = InputManager::GetInstance().GetCursorPosition();
     }
     DistanceZoom(InputManager::GetInstance().GetCursorPosition());
     prev_released = false;
+    zooming = true;
   }
   // TODO: maybe make axes a GUI feature?
   // else if (InputManager::GetInstance().IsKeyPressed('A')) {
@@ -73,8 +104,15 @@ void ArcBallCameraNode::Update(double delta_time) {
   // }
   else {
     auto scroll = input_manager.FetchAndResetMouseScroll();
-    if (scroll != 0.0) {
+    if (scroll != 0.0 && !(translating || orbiting)) {
       DistanceZoom(-float(scroll) * 0.1f);
+      zooming = true;
+    }
+    // If we've let go of our keys/mouse fully, reset action vars
+    if (prev_released) {
+      zooming = false;
+      orbiting = false;
+      translating = false;
     }
     prev_released = true;
     start_position_ = GetTransform().GetPosition();
