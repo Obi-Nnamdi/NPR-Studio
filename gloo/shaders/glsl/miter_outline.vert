@@ -3,7 +3,7 @@
 #version 330 core
 
 layout (std140) uniform TVertex {
-    vec4 vertex[1000];
+    vec4 vertex[1024];
 };
 
 uniform mat4 model_matrix;

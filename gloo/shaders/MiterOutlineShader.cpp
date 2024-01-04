@@ -39,14 +39,15 @@ void MiterOutlineShader::SetTargetNode(const SceneNode& node, const glm::mat4& m
 
   // Set material.
   MaterialComponent* material_component_ptr = node.GetComponentPtr<MaterialComponent>();
+  const Material* material_ptr;
   if (material_component_ptr == nullptr) {
-    // Default material: white.
-    SetUniform("material_color", glm::vec3(1.f));
-    SetUniform("u_thickness", 20.f);
+    material_ptr = &Material::GetDefaultNPR();
   } else {
-    SetUniform("material_color", material_component_ptr->GetMaterial().GetOutlineColor());
-    SetUniform("u_thickness", material_component_ptr->GetMaterial().GetOutlineThickness());
+    material_ptr = &material_component_ptr->GetMaterial();
   }
+
+  SetUniform("material_color", material_ptr->GetOutlineColor());
+  SetUniform("u_thickness", material_ptr->GetOutlineThickness());
 }
 
 void MiterOutlineShader::SetCamera(const CameraComponent& camera) const {

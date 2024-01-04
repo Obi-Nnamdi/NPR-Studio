@@ -6,7 +6,7 @@ namespace GLOO {
 /**
  * Shader for created outlines with a desired thickness.
  */
-const size_t maxUBOArraySize = 1000;
+const size_t maxUBOArraySize = 1024;
 struct VertexInfo {
   // int arraySize;
   glm::vec4 myVec4Array[maxUBOArraySize];  // Minimum array size (adjust as needed)

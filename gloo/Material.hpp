@@ -96,7 +96,7 @@ class Material {
   glm::vec3 GetOutlineColor() const { return outline_color_; }
 
   void SetOutlineThickness(const float& width) { outline_thickness_ = width; }
-  float GetOutlineThickness() { return outline_thickness_; }
+  float GetOutlineThickness() const { return outline_thickness_; }
 
   // TODO: SetCoolColor and SetWarmColor options?
   void SetAmbientTexture(std::shared_ptr<Texture> tex) {
