@@ -272,15 +272,17 @@ void OutlineNode::Update(double delta_time) {
   // TODO: Don't need to update anything if the camera isn't moving, except for the first time when
   // the camera stops (e.g. for miter joins).
 
-  // On each frame, recaclulate the silhouette edges and draw all updated edges, but
-  // only recalculate silhouette edges when we're displaying them and the camera isn't moving
-  if (show_silhouette_edges_ && is_camera_moving_) {
-    ComputeSilhouetteEdges();
-  }
-
   // Silhouette edges should be rerenedered if we've changed their status (original variable value)
   // or if the camera has moved (is_camera_moving_).
   update_silhouette_ = update_silhouette_ || is_camera_moving_;
+
+  // On each frame, recaclulate the silhouette edges and draw all updated edges, but
+  // only recalculate silhouette edges when we're displaying them and the camera isn't moving, or if
+  // we've toggled silhouette edges on
+  if (show_silhouette_edges_ && update_silhouette_) {
+    ComputeSilhouetteEdges();
+  }
+
   // TODO performance mode is currently broken.
   RenderEdges();
 
@@ -336,9 +338,9 @@ void OutlineNode::RenderEdges() {
         }
       }
     }
-    // Update outline mesh with new indices
-    outline_mesh_->UpdateIndices(std::move(newIndices));
   }
+  // Update outline mesh with new indices
+  outline_mesh_->UpdateIndices(std::move(newIndices));
 
   // Reset Polyline edge nodes
   // TODO: you can do better here but for now this is fine
