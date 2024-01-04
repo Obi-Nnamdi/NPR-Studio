@@ -97,9 +97,11 @@ The specified filename begins from the [`assets/models`](./assets/models/) direc
 
 For example, the [sponza palace](./assets/models/sponza_low) scene can be opened by running `./npr_studio sponza_low/sponza_norm.obj`.
 
-Rendered images and render presets will be in the `assets/renders` and `assets/presets` directories, respectively.
+Rendered images and render presets will be in the `assets/renders` and `assets/presets` directories, respectively. Note that rendering currently takes a screenshot of the application window, and (unfortunately) doesn't let you specify a resolution.
 
 If you don't specify a filename, a default mesh will be used for rendering.
+
+To move around the scene, click and drag the left mouse button for orbiting, right mouse button/scroll wheel for zooming, and middle mouse button (or click and drag left mouse button + shift) to move.
 
 ## Editing Code
 If you add files, be sure to rerun `cmake` running `make`.
