@@ -50,10 +50,12 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
   // Backtrack
   currentPath.pop_back();
 }
+// TODO: Simplifying Polylines by either a.) index distance, or b.) physical distance
 
 /**
  * Splits polylines in `paths` into new ones, ensuring that no polylines over max_size are left in
  * the resulting `paths` array.
+ * TODO: add 3-lengh segment between long polyline breaks to approximate "joins"?
  *
  * @param paths: The vector of polylines to be split.
  * @param max_size: The maximum size of a polyline. Must be > 1.

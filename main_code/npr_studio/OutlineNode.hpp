@@ -139,6 +139,7 @@ class OutlineNode : public SceneNode {
       0.001 / 2;  // Controls distance from mesh that outlines are rendered from
   float crease_threshold_ = glm::radians(30.f);
   const Scene *parent_scene_;
+  bool debug_ = false;  // Controls printing of various information in outline rendering
 };
 }  // namespace GLOO
 

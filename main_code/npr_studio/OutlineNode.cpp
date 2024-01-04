@@ -296,8 +296,10 @@ void OutlineNode::RenderEdges() {
   if (!(update_border_ || update_crease_ || update_silhouette_ || update_outline_method_)) {
     return;
   }
-  std::cout << std::chrono::system_clock::now().time_since_epoch().count() << ": updating edges!"
-            << std::endl;
+  if (debug_) {
+    std::cout << std::chrono::system_clock::now().time_since_epoch().count() << ": updating edges!"
+              << std::endl;
+  }
   auto newIndices = make_unique<IndexArray>();
   // Render miter join edges in passes
   auto renderedSilhouetteEdges = std::vector<Edge>();
@@ -359,11 +361,13 @@ void OutlineNode::RenderEdges() {
   auto& positions = outline_mesh_->GetPositions();
   auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
   auto material_ptr = std::make_shared<Material>(material);
-  // std::cout << "Num Polylines: " << polylines.size() << std::endl;
   // Render polylines in passes
   // keep a global tracker of how many polylines we've currently rendered
   size_t polylineCounter = 0;
   for (auto& polylines : polylineGroups) {
+    if (polylines.size() != 0 && debug_) {
+      std::cout << "Num Polylines: " << polylines.size() << std::endl;
+    }
     size_t lastPassPolylines =
         polylineCounter;  // tracks how many polylines we've rendered up to the previous pass
     for (; (polylineCounter - lastPassPolylines) < polylines.size(); ++polylineCounter) {
