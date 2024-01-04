@@ -41,6 +41,7 @@ class ToonViewerApp : public Application {
   // Applies a general function to all Application's outline nodes
   void ApplyFuncToOutlineNodes(const std::function<void(OutlineNode*)>& func);
 
+  // TODO support high-quality renders
   void RenderImageToFile(const std::string filename, const std::string extension) const;
   void SaveRenderSettings(const std::string filename, const bool& includeColorInfo = true,
                           const bool& includeLightInfo = true, const bool& includeMeshInfo = true,
