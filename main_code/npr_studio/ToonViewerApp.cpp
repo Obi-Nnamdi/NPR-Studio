@@ -581,7 +581,10 @@ void ToonViewerApp::DrawGUI() {
     }
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
-      ImGui::Text("Renders scene without Miter Joins when camera is moving.");
+      ImGui::Text(
+          "Renders scene without miter joins while camera is moving.\nRequires miter join mode to "
+          "be "
+          "enabled.");
       ImGui::EndTooltip();
     }
     ImGui::Separator();

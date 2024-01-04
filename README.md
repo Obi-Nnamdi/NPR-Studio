@@ -101,7 +101,7 @@ Rendered images and render presets will be in the `assets/renders` and `assets/p
 
 If you don't specify a filename, a default mesh will be used for rendering.
 
-To move around the scene, click and drag the left mouse button for orbiting, right mouse button/scroll wheel for zooming, and middle mouse button (or click and drag left mouse button + shift) to move.
+To move around the scene, click and drag the left mouse button for orbiting, right mouse button/scroll wheel for zooming, and middle mouse button (or shift + click and drag left mouse button) to move.
 
 ## Editing Code
 If you add files, be sure to rerun `cmake` running `make`.

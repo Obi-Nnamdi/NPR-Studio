@@ -256,8 +256,8 @@ void OutlineNode::CalculateFaceDirections() {
 
 void OutlineNode::Update(double delta_time) {
   // Find out if camera is moving
-  auto camera_pointer = parent_scene_->GetActiveCameraPtr();
   // TODO: Static casting to an ArcBallCameraNode may cause problems when changing camera types
+  auto camera_pointer = parent_scene_->GetActiveCameraPtr();
   auto isCameraMoving = static_cast<ArcBallCameraNode*>(camera_pointer->GetNodePtr())->IsMoving();
   // Before updating is_camera_moving_ (instance variable), we use its old value to check if we're
   // now at a "static" frame:
