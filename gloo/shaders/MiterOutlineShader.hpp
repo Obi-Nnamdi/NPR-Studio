@@ -23,6 +23,7 @@ class MiterOutlineShader : public ShaderProgram {
   void AssociateVertexArray(VertexArray& vertex_array) const;
   GLuint CreateUBO() const;
   void UpdateUBO(const std::vector<glm::vec3>& varray) const;
+  void ReinitializeUBO() const;
   GLuint vertex_ubo_;
   // Since TVertex is the first UBO in the vertex shader, its binding point is 0.
   GLuint buffer_binding_point_ = 0;

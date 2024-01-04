@@ -73,12 +73,22 @@ GLuint MiterOutlineShader::CreateUBO() const {
   // Allocate space for the UBO data (size of VertexInfo + maxUBOArraySize - 1 * sizeof(glm::vec4))
   GL_CHECK(glBufferData(GL_UNIFORM_BUFFER,
                         sizeof(VertexInfo) + (maxUBOArraySize - 1) * sizeof(glm::vec4), NULL,
-                        GL_DYNAMIC_DRAW));
+                        GL_DYNAMIC_DRAW));  // Use GL_DYNAMIC_DRAW so we can use mapping
 
   // Bind the UBO to a binding point (here we choose 0)
   GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, buffer_binding_point_, ubo));
 
   return ubo;
+}
+
+void MiterOutlineShader::ReinitializeUBO() const {
+  // Bind buffer
+  GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, vertex_ubo_));
+
+  // Allocate space for the UBO data (size of VertexInfo + maxUBOArraySize - 1 * sizeof(glm::vec4))
+  GL_CHECK(glBufferData(GL_UNIFORM_BUFFER,
+                        sizeof(VertexInfo) + (maxUBOArraySize - 1) * sizeof(glm::vec4), NULL,
+                        GL_DYNAMIC_DRAW));
 }
 
 void MiterOutlineShader::UpdateUBO(const std::vector<glm::vec3>& varray) const {
@@ -99,8 +109,12 @@ void MiterOutlineShader::UpdateUBO(const std::vector<glm::vec3>& varray) const {
     uboData->myVec4Array[i] = glm::vec4(varray[i], 1.0f);
   }
 
-  // Unmap the buffer
-  GL_CHECK(glUnmapBuffer(GL_UNIFORM_BUFFER));
+  // Unmap the buffer, and if the unmap operation fails, we need to reinitialize the buffer
+  if (GL_CHECK(glUnmapBuffer(GL_UNIFORM_BUFFER)) == GL_FALSE) {
+    std::cerr << "Unmapping operation in MiterOutlineShader failed, reinitializing UBO"
+              << std::endl;
+    ReinitializeUBO();
+  }
 
   // Bind the UBO to the binding point
   GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, buffer_binding_point_, vertex_ubo_));
