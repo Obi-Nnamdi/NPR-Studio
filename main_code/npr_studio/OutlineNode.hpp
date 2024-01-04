@@ -72,7 +72,9 @@ class OutlineNode : public SceneNode {
   // Change shader applied to outline mesh
   void ChangeMeshShader(std::shared_ptr<ShaderProgram> shader);
   void ChangeMeshShader(ToonShadingType shaderType);
-  // Functions controlling visibility of various edge types
+  // Functions controlling visibility of various edge types.
+  // If the status is changed from what is was before, then we mark the edge type as needed to be
+  // updated in the next render cycle.
   void SetSilhouetteStatus(bool status);
   void SetCreaseStatus(bool status);
   void SetBorderStatus(bool status);
@@ -115,6 +117,15 @@ class OutlineNode : public SceneNode {
   std::shared_ptr<VertexObject> mesh_;
   std::shared_ptr<VertexObject> outline_mesh_;
   std::vector<PolylineNode *> polyline_nodes_;
+
+  // Varaibles telling us when to updae the cache
+  bool update_border_, update_crease_, update_silhouette_, update_outline_method_ = true;
+  bool is_camera_moving_ = true;
+  // Polyline caches for rendering
+  // TODO: Implement caching polylines.
+  std::vector<Polyline> silhoutte_polyline_cache_;
+  std::vector<Polyline> crease_polyline_cache_;
+  std::vector<Polyline> border_polyline_cache_;
 
   SceneNode *mesh_node_;
 

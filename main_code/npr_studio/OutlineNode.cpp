@@ -1,5 +1,6 @@
 #include "OutlineNode.hpp"
 
+#include <chrono>
 #include <glm/gtx/string_cast.hpp>
 
 #include "gloo/Material.hpp"
@@ -38,7 +39,9 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   SetupEdgeMaps();
   // Precompute Border and Crease Edges:
   ComputeBorderEdges();
-  ComputeCreaseEdges();  // Note: this should be done in Update if the model geometry changes.
+  ComputeCreaseEdges();
+  // Compute silhouette edges for first frame
+  ComputeSilhouetteEdges();
 }
 
 OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject> mesh,
@@ -76,6 +79,8 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
   // Precompute Border and Crease Edges:
   ComputeBorderEdges();
   ComputeCreaseEdges();
+  // Compute silhouette edges for first frame
+  ComputeSilhouetteEdges();
 }
 
 void OutlineNode::SetOutlineMesh() {
@@ -118,9 +123,18 @@ void OutlineNode::DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader) {
   AddChild(std::move(meshNode));
 }
 
-void OutlineNode::SetSilhouetteStatus(bool status) { show_silhouette_edges_ = status; }
-void OutlineNode::SetCreaseStatus(bool status) { show_crease_edges_ = status; }
-void OutlineNode::SetBorderStatus(bool status) { show_border_edges_ = status; }
+void OutlineNode::SetSilhouetteStatus(bool status) {
+  update_silhouette_ = status != show_silhouette_edges_;
+  show_silhouette_edges_ = status;
+}
+void OutlineNode::SetCreaseStatus(bool status) {
+  update_crease_ = status != show_crease_edges_;
+  show_crease_edges_ = status;
+}
+void OutlineNode::SetBorderStatus(bool status) {
+  update_border_ = status != show_border_edges_;
+  show_border_edges_ = status;
+}
 
 void OutlineNode::ChangeMeshShader(ToonShadingType shadingType) {
   // Create entirely new shader and assign it to mesh
@@ -145,6 +159,7 @@ void OutlineNode::ChangeMeshShader(std::shared_ptr<ShaderProgram> shader) {
 }
 
 void OutlineNode::SetCreaseThreshold(float degrees) {
+  update_crease_ = true;  // set crease edges to be re-rendered next render cycle
   crease_threshold_ = glm::radians(degrees);
   ComputeCreaseEdges();
 }
@@ -213,7 +228,10 @@ void OutlineNode::SetOutlineThickness(const float& width) {
   UpdatePolylineNodeMaterials(material_ptr);
 }
 
-void OutlineNode::SetOutlineMethod(OutlineMethod method) { outline_method_ = method; }
+void OutlineNode::SetOutlineMethod(OutlineMethod method) {
+  update_outline_method_ = outline_method_ != method;
+  outline_method_ = method;
+}
 
 void OutlineNode::SetMeshVisibility(bool visible) { mesh_node_->SetActive(visible); }
 void OutlineNode::SetPerformanceModeStatus(bool enabled) { enable_performance_mode_ = enabled; }
@@ -237,29 +255,56 @@ void OutlineNode::CalculateFaceDirections() {
 }
 
 void OutlineNode::Update(double delta_time) {
-  // TODO: Don't need to update anything if the camera isn't moving, except for the first time when
-  // the camera stops (e.g. for miter joins).
-
-  // On each frame, recaclulate the silhouette edges and draw all update edges
-  // Only recalculate silhouette edges when we're displaying them
-  if (show_silhouette_edges_) {
-    ComputeSilhouetteEdges();
-  }
-  RenderEdges();
-}
-
-void OutlineNode::RenderEdges() {
   // Find out if camera is moving
   auto camera_pointer = parent_scene_->GetActiveCameraPtr();
   // TODO: Static casting to an ArcBallCameraNode may cause problems when changing camera types
-  bool isCameraMoving = static_cast<ArcBallCameraNode*>(camera_pointer->GetNodePtr())->IsMoving();
+  auto isCameraMoving = static_cast<ArcBallCameraNode*>(camera_pointer->GetNodePtr())->IsMoving();
+  // Before updating is_camera_moving_ (instance variable), we use its old value to check if we're
+  // now at a "static" frame:
+  auto staticFrame = is_camera_moving_ != isCameraMoving;
+  // If we're at a static frame and in performance mode, update the outline method.
+  update_outline_method_ = update_outline_method_ || (staticFrame && enable_performance_mode_);
+  // Set new value of is_camera_moving_.
+  is_camera_moving_ = isCameraMoving;
+
   // std::cout << "Is Moving: " << (isCameraMoving ? "true" : "false") << std::endl;
 
+  // TODO: Don't need to update anything if the camera isn't moving, except for the first time when
+  // the camera stops (e.g. for miter joins).
+
+  // On each frame, recaclulate the silhouette edges and draw all updated edges, but
+  // only recalculate silhouette edges when we're displaying them and the camera isn't moving
+  if (show_silhouette_edges_ && is_camera_moving_) {
+    ComputeSilhouetteEdges();
+  }
+
+  // Silhouette edges should be rerenedered if we've changed their status (original variable value)
+  // or if the camera has moved (is_camera_moving_).
+  update_silhouette_ = update_silhouette_ || is_camera_moving_;
+  // TODO performance mode is currently broken.
+  RenderEdges();
+
+  // Now that we've updated and rendered our edges, we don't need to do it again.
+  update_silhouette_ = false;
+  update_crease_ = false;
+  update_border_ = false;
+  update_outline_method_ = false;
+}
+
+void OutlineNode::RenderEdges() {
+  // If there's nothing to update at all, just return immediately
+  if (!(update_border_ || update_crease_ || update_silhouette_ || update_outline_method_)) {
+    return;
+  }
+  std::cout << std::chrono::system_clock::now().time_since_epoch().count() << ": updating edges!"
+            << std::endl;
   auto newIndices = make_unique<IndexArray>();
   // Render miter join edges in passes
   auto renderedSilhouetteEdges = std::vector<Edge>();
   auto renderedCreaseEdges = std::vector<Edge>();
   auto renderedBorderEdges = std::vector<Edge>();
+
+  // Update lists of rendered edges if any of them need to be updated
 
   // Only iterate through our edges if we're going to draw any of them
   if (show_silhouette_edges_ || show_border_edges_ || show_crease_edges_) {
@@ -272,7 +317,7 @@ void OutlineNode::RenderEdges() {
         // Toggle between rendering with miter joins and "fast" edge rendering
         // In performance mode, only render miter joins when the camera isn't moving
         if (outline_method_ == OutlineMethod::STANDARD ||
-            (isCameraMoving && enable_performance_mode_)) {
+            (is_camera_moving_ && enable_performance_mode_)) {
           newIndices->push_back(edge.first);
           newIndices->push_back(edge.second);
         } else if (outline_method_ == OutlineMethod::MITER) {
@@ -289,15 +334,24 @@ void OutlineNode::RenderEdges() {
         }
       }
     }
+    // Update outline mesh with new indices
+    outline_mesh_->UpdateIndices(std::move(newIndices));
   }
 
   // Reset Polyline edge nodes
   // TODO: you can do better here but for now this is fine
+  // TODO: If nothing changed, don't even turn off anything
+  // TODO: Polyline node arrays for each edge type (so you can turn them on and off?)
   for (auto& polylineNode : polyline_nodes_) {
     polylineNode->SetActive(false);
   }
 
   // Render polylines if we're doing the miter join method
+  // TODO:
+  // Keep PolylineGroups as a cache of each type of edge, and actually only add each edge type of
+  // polylineGroups if they're being rendered
+  // If we're updating edges, use global border and crease edge polyline caches and update silhoutte
+  // edges dynamically
   auto polylineGroups = {edgesToPolylines(renderedSilhouetteEdges),
                          edgesToPolylines(renderedCreaseEdges),
                          edgesToPolylines(renderedBorderEdges)};
@@ -330,7 +384,6 @@ void OutlineNode::RenderEdges() {
       }
     }
   }
-  outline_mesh_->UpdateIndices(std::move(newIndices));
 }
 
 void PrintEdge(Edge edge) {
