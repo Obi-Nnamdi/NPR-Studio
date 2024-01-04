@@ -73,7 +73,7 @@ GLuint MiterOutlineShader::CreateUBO() const {
   // Allocate space for the UBO data (size of VertexInfo + maxUBOArraySize - 1 * sizeof(glm::vec4))
   GL_CHECK(glBufferData(GL_UNIFORM_BUFFER,
                         sizeof(VertexInfo) + (maxUBOArraySize - 1) * sizeof(glm::vec4), NULL,
-                        GL_STATIC_DRAW));
+                        GL_DYNAMIC_DRAW));
 
   // Bind the UBO to a binding point (here we choose 0)
   GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, buffer_binding_point_, ubo));
@@ -83,17 +83,26 @@ GLuint MiterOutlineShader::CreateUBO() const {
 
 void MiterOutlineShader::UpdateUBO(const std::vector<glm::vec3>& varray) const {
   GL_CHECK(glBindBuffer(GL_UNIFORM_BUFFER, vertex_ubo_));
-  // Set the data for the UBO
-  VertexInfo uboData;
+
+  // Map the buffer for writing
+  VertexInfo* uboData = static_cast<VertexInfo*>(glMapBufferRange(
+      GL_UNIFORM_BUFFER, 0, sizeof(VertexInfo), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+
+  if (!uboData) {
+    // Handle error: Unable to map the buffer
+    throw std::runtime_error("unable to map buffer");
+    return;
+  }
 
   // Populate the array with data
   for (int i = 0; i < varray.size(); ++i) {
-    uboData.myVec4Array[i] = glm::vec4(varray[i], 1.0f);
+    uboData->myVec4Array[i] = glm::vec4(varray[i], 1.0f);
   }
 
-  // Update UBO data
-  GLintptr offset = 0;  // no data offset
-  glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(VertexInfo), &uboData);
+  // Unmap the buffer
+  GL_CHECK(glUnmapBuffer(GL_UNIFORM_BUFFER));
+
+  // Bind the UBO to the binding point
   GL_CHECK(glBindBufferBase(GL_UNIFORM_BUFFER, buffer_binding_point_, vertex_ubo_));
 }
 
