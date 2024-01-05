@@ -8,6 +8,9 @@ int main(int argc, char** argv) {
   // Populate the executable directory we're running the project from
   SetProjectExecutableDir(argv[0]);
 
+  // After populating the base path, update the rest of the path names from the gloo.cfg file.
+  UpdateRelativePathsFromConfig();
+
   // Populate the model to render with if it's specified
   std::string filename = argc >= 2 ? std::string(argv[1]) : "";
 

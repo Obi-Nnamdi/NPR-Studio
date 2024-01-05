@@ -46,8 +46,14 @@ std::vector<std::string> Split(const std::string& s, char delim);
 std::string GetBasePath(const std::string& path);
 
 // Helpers for managing paths.
+// TODO: maybe make a separate namespace or class for these?
 extern std::string project_executable_dir_;  // Set by main
+extern std::string project_shader_dir_;      // From gloo.cfg
+extern std::string project_asset_dir_;       // From gloo.cfg
 void SetProjectExecutableDir(std::string path);
+// after establishing the root directory, this function allows us to set the relative paths for the
+// other directories like assets/shaders by reading the gloo.cfg file.
+void UpdateRelativePathsFromConfig();
 std::string GetProjectRootDir();
 std::string GetShaderGLSLDir();
 std::string GetAssetDir();
