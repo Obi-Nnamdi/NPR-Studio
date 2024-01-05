@@ -71,6 +71,8 @@
     "map": "cpp",
     "unordered_set": "cpp",
     "functional": "cpp",
-    "thread": "cpp"
+    "thread": "cpp",
+    "__functional_base": "cpp",
+    "utility": "cpp"
   }
 }
