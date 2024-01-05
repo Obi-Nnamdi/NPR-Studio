@@ -38,6 +38,6 @@ ExternalProject_Add(
         "-DGLFW_BUILD_DOCS=OFF"
         "-DGLFW_BUILD_TESTS=OFF"
         "-DGLFW_BUILD_EXAMPLES=OFF"
-        "-DGLFW_INSTALL=ON"
+        "-DGLFW_INSTALL=OFF" # Turn off installing GLFW when we're packaging the rest of our project.
 )
 
