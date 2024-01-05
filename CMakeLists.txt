@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
-project(NPR_STUDIO)
+project(npr_studio VERSION 1.0.0)
 message(STATUS "Building NPR Studio...")
-
 # Otherwise IMGUI may pick GLEW as GL loader
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIMGUI_IMPL_OPENGL_LOADER_GLAD")
 
@@ -93,6 +92,8 @@ include_directories(${external_source_dir}/stb)
 ###################################################
 # Add path macros.
 set(gloo_dir ${PROJECT_SOURCE_DIR}/gloo)
+set (shader_dir ${gloo_dir}/shaders/glsl) 
+set (asset_dir ${PROJECT_SOURCE_DIR}/assets)
 
 ###################################################
 
@@ -109,7 +110,7 @@ file(GLOB gloo_srcs
 
 ###################################################
 
-set(assignment_name "npr_studio")
+set(assignment_name "npr_studio") # TODO replace with project name
 set(assignment_dir ${PROJECT_SOURCE_DIR}/main_code/${assignment_name})
 set(assignment_common_dir ${PROJECT_SOURCE_DIR}/main_code/common)
 include_directories(${assignment_dir})
@@ -135,13 +136,94 @@ foreach (source IN LISTS all_files)
     string(REPLACE "/" "\\" source_path_msvc "${source_path}")
     source_group("${source_path_msvc}" FILES "${source}")
 endforeach ()
+# Just for consistency, we set the base output file name of all targets to be the same
+set (OUTPUT_NAME ${assignment_name}) # TODO: doesn't work
 
-add_executable(${assignment_name} ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files})
+# Binary executable
+set (binary_name ${assignment_name}_bin)
+
+add_executable(${binary_name} ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files})
+
+target_link_libraries(${binary_name} ${external_libs})
+target_compile_options(${binary_name} PRIVATE ${cxx_warning_flags})
+
+# TODO: Add assets/shaders in directory around project, but change it to inside the app if it's OSX.
+
+if (MSVC)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${binary_name})
+endif ()
+
+# MAC OS App
+if (APPLE)
+add_executable(${assignment_name} MACOSX_BUNDLE ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files})
 
 target_link_libraries(${assignment_name} ${external_libs})
 target_compile_options(${assignment_name} PRIVATE ${cxx_warning_flags})
 
-if (MSVC)
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${assignment_name})
-endif ()
+# After creating our app, set its prefix
+set(app_prefix "${assignment_name}.app/Contents") # TODO make OS specific
 
+# Add gloo.cfg file to bundle
+set(gloo_file_path "${CMAKE_CURRENT_BINARY_DIR}/${app_prefix}/gloo.cfg")
+file(WRITE "${gloo_file_path}" "shaders=Resources/shaders/\nassets=Resources/assets/")
+message(STATUS "gloo.cfg file created at '${gloo_file_path}'.")
+
+# Packaging Things for Installation
+# TODO: Copy from here: https://github.com/kracejic/cleanCppProject/blob/master/packaging/CMakeLists.txt
+set(canonical_name "NPR Studio")
+set(resources_dir "${app_prefix}/Resources")
+
+
+# Generate Mac .dmg
+
+# Put initial executable in package
+install(TARGETS ${assignment_name} DESTINATION ./)
+
+# Put shaders in package
+# Trailing slash added so we don't include "glsl" folder itself when installing
+install(DIRECTORY ${shader_dir}/ DESTINATION ${resources_dir}/shaders)
+# Put assets in package, excluding the render assets and application screenshots, but still keep the /renders folder
+install(DIRECTORY ${asset_dir}/ DESTINATION ${resources_dir}/assets
+        PATTERN "assets/renders/*" EXCLUDE PATTERN "assets/screenshots" EXCLUDE)
+
+set(gloo_dir ${PROJECT_SOURCE_DIR}/gloo)
+
+
+# Configure Global CPack Variables
+set(CPACK_GENERATOR "DragNDrop") # TODO: also use NSIS
+set(CPACK_PACKAGE_NAME ${canonical_name})
+set(CPACK_BUNDLE_NAME ${canonical_name})
+set(CPACK_PACKAGE_VENDOR "Obi-Nnamdi")
+# set(CPACK_PACKAGE_CONTACT "something <something@something.com>") # TODO: Add contact
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
+set(HOMEPAGE "https://github.com/Obi-Nnamdi/NPR-Studio")
+
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+
+# This is the default value for the package file, but for readability we repeat it commented out
+# set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME})
+
+
+# TODO: Add license
+# TODO: Add icons
+
+# Tell CPack to put everything we "install" here:
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}")
+# set(CMAKE_INSTALL_PREFIX "${assignment_name}.app/Contents")
+# Tell CPack to put our acutal packaging stuff here:
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/out")
+
+# set human names to executables - creates start menu/desktop shortcuts for NSIS
+set(CPACK_PACKAGE_EXECUTABLES ${assignment_name} ${canonical_name})
+set(CPACK_CREATE_DESKTOP_LINKS ${canonical_name})
+
+# Apple Build Settings
+# set(CPACK_PACKAGING_INSTALL_PREFIX "${assignment_name}.app/Contents")
+set(CPACK_PACKAGING_INSTALL_PREFIX "/")
+set(MACOSX_BUNDLE_BUNDLE_NAME ${CPACK_PACKAGE_NAME}) # Name that shows up in the toolbar when running the app
+set(MACOSX_BUNDLE_BUNDLE_GUI_IDENTIFIER "com.example.npr-studio") # TODO handle properly
+endif()
+# Include cpack
+include(CPack)
