@@ -1,12 +1,13 @@
 #include "utils.hpp"
 
 #include <cstdio>
-
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 
 namespace GLOO {
+std::string project_executable_dir_ = "";
+
 std::vector<std::string> Split(const std::string& s, char delim) {
   std::stringstream ss(s);
   std::string item;
@@ -44,9 +45,13 @@ std::string GetBasePath(const std::string& path) {
 const std::string kRootSentinel = "gloo.cfg";
 const int kMaxDepth = 20;
 
+void SetProjectExecutableDir(std::string path) { project_executable_dir_ = GetBasePath(path); }
+
 std::string GetProjectRootDir() {
+  // Set initial searching directory to either the executable path or the "./" relative directory if
+  // the executable path isn't found.
+  std::string dir = project_executable_dir_ != "" ? project_executable_dir_ : "./";
   // Recursively going up in directory until finding .gloo_config
-  std::string dir = "./";
   for (int i = 0; i < kMaxDepth; i++) {
     std::ifstream ifs(dir + kRootSentinel);
     if (ifs.good()) {
@@ -61,10 +66,12 @@ std::string GetProjectRootDir() {
 }
 
 std::string GetShaderGLSLDir() {
+  // TODO: Read from gloo.cfg file itself to get the shader directory
   return GetProjectRootDir() + "gloo/shaders/glsl/";
 }
 
 std::string GetAssetDir() {
+  // TODO: Read from gloo.cfg file itself to get the asset directory
   return GetProjectRootDir() + "assets/";
 }
 

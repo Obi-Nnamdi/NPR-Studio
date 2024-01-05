@@ -46,6 +46,8 @@ std::vector<std::string> Split(const std::string& s, char delim);
 std::string GetBasePath(const std::string& path);
 
 // Helpers for managing paths.
+extern std::string project_executable_dir_;  // Set by main
+void SetProjectExecutableDir(std::string path);
 std::string GetProjectRootDir();
 std::string GetShaderGLSLDir();
 std::string GetAssetDir();

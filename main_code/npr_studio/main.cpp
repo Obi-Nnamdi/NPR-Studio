@@ -4,8 +4,10 @@
 #include "ToonViewerApp.hpp"
 
 using namespace GLOO;
-
 int main(int argc, char** argv) {
+  // Populate the executable directory we're running the project from
+  SetProjectExecutableDir(argv[0]);
+
   // Populate the model to render with if it's specified
   std::string filename = argc >= 2 ? std::string(argv[1]) : "";
 
