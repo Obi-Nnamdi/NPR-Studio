@@ -510,6 +510,35 @@ void ToonViewerApp::LoadRenderSettings(const std::string filename) {
   }
 }
 
+void ToonViewerApp::UpdateActiveModel() {
+  // Delete scene and outline nodes
+  outline_nodes_.clear();
+  scene_.release();
+
+  // Reset scene
+  scene_ = make_unique<Scene>(make_unique<SceneNode>());
+  SetupScene();
+  // Push all our GUI values onto our new outline nodes
+  PushAllGUIValues();
+}
+
+void ToonViewerApp::PushAllGUIValues() {
+  SetShadingType(shading_type_);
+  UpdateSilhouetteStatus();
+  UpdateCreaseStatus();
+  UpdateBorderStatus();
+
+  UpdateCreaseThreshold();
+  UpdateOutlineThickness();
+  UpdateOutlineMethod();
+  UpdatePerformanceModeStatus();
+  UpdateMeshVisibility();
+  SetIlluminatedColor(vectorToVec3(illumination_color_));
+  SetShadowColor(vectorToVec3(shadow_color_));
+  SetOutlineColor(vectorToVec3(outline_color_));
+  SetBackgroundColor(vectorToVec4(background_color_));
+}
+
 void ToonViewerApp::DrawGUI() {
   // Information for file rendering.
   const char* fileExtensions[] = {".png", ".jpg", ".bmp", ".tga"};
@@ -718,6 +747,28 @@ void ToonViewerApp::DrawGUI() {
     ImGui::PushID("Load Settings Filename Label");
     ImGui::InputTextWithHint(/*label = */ "", "filename", loadSettingsFilename,
                              IM_ARRAYSIZE(loadSettingsFilename));
+    ImGui::PopID();
+
+    // Model Loading Dialog
+    static char loadModelFilename[512];
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .3f);
+    if (ImGui::Button("Load Model")) {
+      model_filename_ = loadModelFilename;
+      UpdateActiveModel();
+    }
+    if (ImGui::IsItemHovered()) {
+      ImGui::BeginTooltip();
+      ImGui::Text(
+          "Load model file from assets/models/ folder of project (only .obj supported).\nInclude "
+          "extension. If left empty or invalid, a default model will be used.");
+      ImGui::EndTooltip();
+    }
+
+    ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .5f);
+    ImGui::SameLine();
+    ImGui::PushID("Load Model Filename Label");
+    ImGui::InputTextWithHint(/*label = */ "", "filename", loadModelFilename,
+                             IM_ARRAYSIZE(loadModelFilename));
     ImGui::PopID();
   }
 

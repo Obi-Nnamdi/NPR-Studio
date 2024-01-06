@@ -17,9 +17,6 @@ class ToonViewerApp : public Application {
   void DrawGUI() override;
 
  private:
-  std::string model_filename_;
-  SunNode* sun_node_;
-  std::vector<OutlineNode*> outline_nodes_;
   void ToggleShading();
   void SetShadingType(const ToonShadingType& shading_type);
   // Functions for globally hiding or unhiding each edge type
@@ -48,8 +45,15 @@ class ToonViewerApp : public Application {
                           const bool& includeOutlineInfo = true,
                           const bool& includeShaderInfo = true);  // saves in assets/presets folder
   void LoadRenderSettings(const std::string filename);  // loads from assets/presets folder
+  // Destroys scene and resets it with model_filename_.
+  void UpdateActiveModel();
+  void PushAllGUIValues();  // force update our outline nodes with every single gui parameter at once
 
   // GUI variables
+
+  std::string model_filename_;
+  SunNode* sun_node_;
+  std::vector<OutlineNode*> outline_nodes_;
 
   bool show_silhouette_ = true;
   bool show_crease_ = true;
