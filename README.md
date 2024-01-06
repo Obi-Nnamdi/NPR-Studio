@@ -87,6 +87,14 @@ You can use CMake-GUI to generate the build system of your choice:
 After building the project, you should see an executable in the `build/Release` directory called "npr_studio". This is the application executable.
 
 ## Usage
+### Normal Execution
+All built executable files (i.e. UNIX executable, MacOSX .app) can be clicked on to open the application, but unix executable file. Models can be loaded from the application GUI.
+
+Note that for a MacOSX app, the models/presets/renders directories are inside of the app itself (found by clicking "show package contents" on the app).
+
+With a UNIX executable, the application can also be run from the command line:
+
+### Running From the command line
 To open an .obj file for rendering, run the application executable in the command line with the following syntax:
 
 ```Shell
@@ -97,11 +105,27 @@ The specified filename begins from the [`assets/models`](./assets/models/) direc
 
 For example, the [sponza palace](./assets/models/sponza_low) scene can be opened by running `./npr_studio sponza_low/sponza_norm.obj`.
 
-Rendered images and render presets will be in the `assets/renders` and `assets/presets` directories, respectively. Note that rendering currently takes a screenshot of the application window, and (unfortunately) doesn't let you specify a resolution.
-
 If you don't specify a filename, a default mesh will be used for rendering.
 
+### File Saving
+
+Rendered images and render presets will be in the `assets/renders` and `assets/presets` directories, respectively. Note that rendering currently takes a screenshot of the application window, and (unfortunately) doesn't let you specify a resolution.
+
+### Interacting with the Application
+
 To move around the scene, click and drag the left mouse button for orbiting, right mouse button/scroll wheel for zooming, and middle mouse button (or shift + click and drag left mouse button) to move.
+
+### Rendering your own Model
+
+When exporting your model, ensure that the .obj mesh is properly triangulated. This can be done in Blender by checking the "Triangulated Mesh" option in the .obj exporter.
+
+The application will calculate its own normals for the .obj file if none are specified. I've found that importing models exported with custom normals from Blender doesn't work well. Feel free to try using the 3D software of your choice though.
+
+If you want to render your own .obj model with custom colors, ensure that the color you want to appear in the renderer is part of the model's **diffuse** component. Ensure that the .obj file has a material group for each of the object's materials (no material groups means that the object is rendered without its own custom colors). This can be done in Blender by checking the "Material Groups" option in the .obj exporter.
+
+When rendering a model with custom colors, you can tell the renderer to pull from the model's diffuse color by clicking the "Reset Colors to Material Diffuse" button. You can also override the model's diffuse colors manually by setting the "illumination" and "shadow" colors in the renderer.
+
+Textures are currently unsupported, and if your model has textures, either remove them from the model's .mtl file or copy the texture files to the model directory and relatively link to them so the .obj importer doesn't break.
 
 ## Editing Code
 If you add files, be sure to rerun `cmake` running `make`.

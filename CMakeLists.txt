@@ -267,6 +267,8 @@ set(resources_dir "${app_prefix}/Resources")
 # Configure Global CPack Variables for installation
 set(CPACK_GENERATOR "DragNDrop")
 
+# TODO: sign app
+
 # This is the default value for the package file, but for readability we repeat it commented out
 # set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME})
 
