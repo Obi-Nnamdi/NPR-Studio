@@ -154,8 +154,6 @@ endif()
 
 set(resource_files ${shader_files} ${model_files} ${preset_files} ${icon_file})
 
-# Just for consistency, we set the base output file name of all targets to be the same
-set (OUTPUT_NAME ${assignment_name}) # TODO: doesn't work
 
 # Binary executable
 set (binary_name ${assignment_name}_bin)
@@ -164,6 +162,9 @@ add_executable(${binary_name} ${gloo_srcs} ${external_srcs} ${assignment_srcs} $
 
 target_link_libraries(${binary_name} ${external_libs})
 target_compile_options(${binary_name} PRIVATE ${cxx_warning_flags})
+
+# Just for consistency, we set the base output file name of the binary to just be the normal assignment name
+set_target_properties(${binary_name} PROPERTIES OUTPUT_NAME ${assignment_name})
 
 # TODO: Add assets/shaders in directory around project, but change it to inside the app if it's OSX.
 
@@ -206,10 +207,14 @@ add_executable(${assignment_name} MACOSX_BUNDLE ${gloo_srcs} ${external_srcs} ${
 target_link_libraries(${assignment_name} ${external_libs})
 target_compile_options(${assignment_name} PRIVATE ${cxx_warning_flags})
 
-# After creating our app, set its prefix
-set(app_prefix "${assignment_name}.app/Contents") # TODO make OS specific
 
 set(canonical_name "NPR Studio")
+
+# Change name of app to be the canonical name
+set_target_properties(${assignment_name} PROPERTIES OUTPUT_NAME "${canonical_name}")
+
+# After creating our app, set its prefix
+set(app_prefix "${canonical_name}.app/Contents") # TODO make OS specific
 set(resources_dir "${app_prefix}/Resources")
 
 # Configure Global CPack Variables for installation
