@@ -153,10 +153,12 @@ elseif (APPLE) #osx icon ressource file, provided from /packaging directory
 endif()
 
 set(resource_files ${shader_files} ${model_files} ${preset_files} ${icon_file})
-
+set_source_files_properties(${resource_files} PROPERTIES HEADER_FILE_ONLY TRUE) # tell compiler to not try and build resource files
 
 # Binary executable
 set (binary_name ${assignment_name}_bin)
+set (binary_path ${CMAKE_BINARY_DIR}/bin/)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${binary_path}/")
 
 add_executable(${binary_name} ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files} ${resource_files})
 
@@ -166,8 +168,38 @@ target_compile_options(${binary_name} PRIVATE ${cxx_warning_flags})
 # Just for consistency, we set the base output file name of the binary to just be the normal assignment name
 set_target_properties(${binary_name} PROPERTIES OUTPUT_NAME ${assignment_name})
 
-# TODO: Add assets/shaders in directory around project, but change it to inside the app if it's OSX.
+# Add resources in directory around executable
+set(internal_shader_dir "/Resources/shaders/")
+set(internal_asset_dir "/Resources/")
+add_custom_target(include_files ALL)
+add_custom_command(
+        TARGET include_files PRE_BUILD
+        # Make Shader, Model, Preset, and Render Dir
+        COMMAND ${CMAKE_COMMAND} -E make_directory 
+                "${binary_path}/${internal_shader_dir}"
+                "${binary_path}/${internal_asset_dir}/presets"
+                "${binary_path}/${internal_asset_dir}/models"
+                "${binary_path}/${internal_asset_dir}/renders"
 
+        # Copy over shader files
+        COMMAND ${CMAKE_COMMAND} -E copy -t
+                "${binary_path}/${internal_shader_dir}"
+                ${shader_files}
+
+        # Copy over preset files
+        COMMAND ${CMAKE_COMMAND} -E copy -t
+                "${binary_path}/${internal_asset_dir}/presets/"
+                ${preset_files}
+
+        # Copy over model files (use recursive structure)
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${model_dir}
+                "${binary_path}/${internal_asset_dir}/models/"
+)
+
+# Create gloo.cfg file
+file(WRITE "${binary_path}/gloo.cfg" 
+           "shaders=${internal_shader_dir}\nassets=${internal_asset_dir}")
 if (MSVC)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${binary_name})
 endif ()
@@ -190,17 +222,32 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}")
 
 # set(CMAKE_INSTALL_PREFIX "${assignment_name}.app/Contents")
 # Tell CPack to put our acutal packaging stuff here:
-set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/out")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
 
 # set human names to executables - creates start menu/desktop shortcuts for NSIS
 set(CPACK_PACKAGE_EXECUTABLES ${assignment_name} ${canonical_name})
 set(CPACK_CREATE_DESKTOP_LINKS ${canonical_name})
 
 ##################################
-# TODO build windows app
+# zipping standard executable - done with standard "make"
+# This is just done for convenience on Apple machines.
+file(ARCHIVE_CREATE
+    OUTPUT "${binary_name}.zip"
+    PATHS 
+        "${binary_path}/"
+    FORMAT "zip")
+
+# If we're not on apple (windows or a unix-like system), create a package by just zipping the binary directory (like we just did)
+# TODO: add something specific for windows
+if (NOT APPLE)
+set(CPACK_GENERATOR "TGZ;ZIP")
+install(DIRECTORY "${binary_path}" 
+        DESTINATION ./
+        USE_SOURCE_PERMISSIONS)
 
 # MAC OS App
-if (APPLE)
+elseif (APPLE)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/")
 set(CPACK_PACKAGING_INSTALL_PREFIX "/")
 add_executable(${assignment_name} MACOSX_BUNDLE ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files} ${resource_files})
 
@@ -243,12 +290,9 @@ install(TARGETS ${assignment_name} DESTINATION ./)
 set(internal_asset_dir "Resources/") # note: causes double slashes in file names while building, but it hasn't been an issue
 set(internal_shader_dir "Resources/shaders/")
 
-# Add icon to package
-
 # TODO: smarter way to do this that covers multiple OS configs?
 set(gloo_file_path "${CMAKE_CURRENT_BINARY_DIR}/${app_prefix}/gloo.cfg")
 file(WRITE "${gloo_file_path}" "shaders=${internal_shader_dir}\nassets=${internal_asset_dir}")
-message(STATUS "gloo.cfg file created at '${gloo_file_path}'.")
 
 # Put shaders in package
 set_source_files_properties(${shader_files} PROPERTIES MACOSX_PACKAGE_LOCATION "${internal_shader_dir}")
@@ -259,14 +303,12 @@ foreach (model_source IN LISTS model_files)
     get_filename_component(rel_folder "${model_source_rel}" PATH)
     set_source_files_properties(${model_source} 
        PROPERTIES 
-       HEADER_FILE_ONLY TRUE # tell compiler to not build model files
        MACOSX_PACKAGE_LOCATION "${internal_asset_dir}/models/${rel_folder}")
 
 endforeach ()
 # Put presets in package
 set_source_files_properties(${preset_files} 
     PROPERTIES 
-    HEADER_FILE_ONLY TRUE # tell compiler to not build model files
     MACOSX_PACKAGE_LOCATION "${internal_asset_dir}/presets"
 )
 
