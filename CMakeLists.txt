@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(npr_studio VERSION 1.0.0)
+project(npr_studio VERSION 0.1.0)
 message(STATUS "Building NPR Studio...")
 # Otherwise IMGUI may pick GLEW as GL loader
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIMGUI_IMPL_OPENGL_LOADER_GLAD")
@@ -94,6 +94,7 @@ include_directories(${external_source_dir}/stb)
 set(gloo_dir ${PROJECT_SOURCE_DIR}/gloo)
 set (shader_dir ${gloo_dir}/shaders/glsl) 
 set (asset_dir ${PROJECT_SOURCE_DIR}/assets)
+set (model_dir ${asset_dir}/models)
 
 ###################################################
 
@@ -128,21 +129,38 @@ file(GLOB header_files
     ${imgui_dir}/*/*.hpp
 )
 
-set(all_files ${assignment_srcs};${external_srcs};${gloo_srcs};${header_files})
+set(all_source_files ${assignment_srcs};${external_srcs};${gloo_srcs};${header_files})
 
-foreach (source IN LISTS all_files)
+foreach (source IN LISTS all_source_files)
     file(RELATIVE_PATH source_rel ${CMAKE_CURRENT_LIST_DIR} ${source})
     get_filename_component(source_path "${source_rel}" PATH)
     string(REPLACE "/" "\\" source_path_msvc "${source_path}")
     source_group("${source_path_msvc}" FILES "${source}")
 endforeach ()
+
+# Get resource files (exclude hidden files)
+file(GLOB shader_files ${shader_dir}/[!.]*)
+file(GLOB_RECURSE model_files ${asset_dir}/models/[!.]*)
+file(GLOB preset_files ${asset_dir}/presets/[!.]*)
+
+# Get icon file
+set(icon_file "")
+if(WIN32) #windows icon resource file, provided from /packaging directory
+    # TODO: Generate windows icon file
+    # set(icon_file "${asset_dir}/packaging/npr_studio.icon.rc")
+elseif (APPLE) #osx icon ressource file, provided from /packaging directory
+    set(icon_file "${asset_dir}/packaging/npr_studio.icns")
+endif()
+
+set(resource_files ${shader_files} ${model_files} ${preset_files} ${icon_file})
+
 # Just for consistency, we set the base output file name of all targets to be the same
 set (OUTPUT_NAME ${assignment_name}) # TODO: doesn't work
 
 # Binary executable
 set (binary_name ${assignment_name}_bin)
 
-add_executable(${binary_name} ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files})
+add_executable(${binary_name} ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files} ${resource_files})
 
 target_link_libraries(${binary_name} ${external_libs})
 target_compile_options(${binary_name} PRIVATE ${cxx_warning_flags})
@@ -153,44 +171,9 @@ if (MSVC)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${binary_name})
 endif ()
 
-# MAC OS App
-if (APPLE)
-add_executable(${assignment_name} MACOSX_BUNDLE ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files})
 
-target_link_libraries(${assignment_name} ${external_libs})
-target_compile_options(${assignment_name} PRIVATE ${cxx_warning_flags})
-
-# After creating our app, set its prefix
-set(app_prefix "${assignment_name}.app/Contents") # TODO make OS specific
-
-# Add gloo.cfg file to bundle
-set(gloo_file_path "${CMAKE_CURRENT_BINARY_DIR}/${app_prefix}/gloo.cfg")
-file(WRITE "${gloo_file_path}" "shaders=Resources/shaders/\nassets=Resources/assets/")
-message(STATUS "gloo.cfg file created at '${gloo_file_path}'.")
-
-# Packaging Things for Installation
-# TODO: Copy from here: https://github.com/kracejic/cleanCppProject/blob/master/packaging/CMakeLists.txt
-set(canonical_name "NPR Studio")
-set(resources_dir "${app_prefix}/Resources")
-
-
-# Generate Mac .dmg
-
-# Put initial executable in package
-install(TARGETS ${assignment_name} DESTINATION ./)
-
-# Put shaders in package
-# Trailing slash added so we don't include "glsl" folder itself when installing
-install(DIRECTORY ${shader_dir}/ DESTINATION ${resources_dir}/shaders)
-# Put assets in package, excluding the render assets and application screenshots, but still keep the /renders folder
-install(DIRECTORY ${asset_dir}/ DESTINATION ${resources_dir}/assets
-        PATTERN "assets/renders/*" EXCLUDE PATTERN "assets/screenshots" EXCLUDE)
-
-set(gloo_dir ${PROJECT_SOURCE_DIR}/gloo)
-
-
-# Configure Global CPack Variables
-set(CPACK_GENERATOR "DragNDrop") # TODO: also use NSIS
+################################
+# Configure Common CPack variables
 set(CPACK_PACKAGE_NAME ${canonical_name})
 set(CPACK_BUNDLE_NAME ${canonical_name})
 set(CPACK_PACKAGE_VENDOR "Obi-Nnamdi")
@@ -202,15 +185,8 @@ set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 
-# This is the default value for the package file, but for readability we repeat it commented out
-# set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME})
-
-
-# TODO: Add license
-# TODO: Add icons
-
-# Tell CPack to put everything we "install" here:
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}")
+
 # set(CMAKE_INSTALL_PREFIX "${assignment_name}.app/Contents")
 # Tell CPack to put our acutal packaging stuff here:
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/out")
@@ -219,11 +195,80 @@ set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/out")
 set(CPACK_PACKAGE_EXECUTABLES ${assignment_name} ${canonical_name})
 set(CPACK_CREATE_DESKTOP_LINKS ${canonical_name})
 
-# Apple Build Settings
-# set(CPACK_PACKAGING_INSTALL_PREFIX "${assignment_name}.app/Contents")
+##################################
+# TODO build windows app
+
+# MAC OS App
+if (APPLE)
 set(CPACK_PACKAGING_INSTALL_PREFIX "/")
+add_executable(${assignment_name} MACOSX_BUNDLE ${gloo_srcs} ${external_srcs} ${assignment_srcs} ${header_files} ${resource_files})
+
+target_link_libraries(${assignment_name} ${external_libs})
+target_compile_options(${assignment_name} PRIVATE ${cxx_warning_flags})
+
+# After creating our app, set its prefix
+set(app_prefix "${assignment_name}.app/Contents") # TODO make OS specific
+
+set(canonical_name "NPR Studio")
+set(resources_dir "${app_prefix}/Resources")
+
+# Configure Global CPack Variables for installation
+set(CPACK_GENERATOR "DragNDrop")
+
+# This is the default value for the package file, but for readability we repeat it commented out
+# set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_SYSTEM_NAME})
+
+
+# TODO: Add license
+
+# Add icon
+set(MACOSX_BUNDLE_ICON_FILE "npr_studio.icns") # don't need to include full path structure here,
+                                               # icon file will be looked up in /Resources dir automatically
+set_source_files_properties(${icon_file} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+# Apple Build Settings
 set(MACOSX_BUNDLE_BUNDLE_NAME ${CPACK_PACKAGE_NAME}) # Name that shows up in the toolbar when running the app
 set(MACOSX_BUNDLE_BUNDLE_GUI_IDENTIFIER "com.example.npr-studio") # TODO handle properly
+
+# Generate Mac .dmg
+# Put initial executable in package
+install(TARGETS ${assignment_name} DESTINATION ./)
+
+# Add gloo.cfg file to bundle that tells program where resource files are
+set(internal_asset_dir "Resources/") # note: causes double slashes in file names while building, but it hasn't been an issue
+set(internal_shader_dir "Resources/shaders/")
+
+# Add icon to package
+
+# TODO: smarter way to do this that covers multiple OS configs?
+set(gloo_file_path "${CMAKE_CURRENT_BINARY_DIR}/${app_prefix}/gloo.cfg")
+file(WRITE "${gloo_file_path}" "shaders=${internal_shader_dir}\nassets=${internal_asset_dir}")
+message(STATUS "gloo.cfg file created at '${gloo_file_path}'.")
+
+# Put shaders in package
+set_source_files_properties(${shader_files} PROPERTIES MACOSX_PACKAGE_LOCATION "${internal_shader_dir}")
+
+# Put models in package, preserving directory structure
+foreach (model_source IN LISTS model_files)
+    file(RELATIVE_PATH model_source_rel ${model_dir} ${model_source})
+    get_filename_component(rel_folder "${model_source_rel}" PATH)
+    set_source_files_properties(${model_source} 
+       PROPERTIES 
+       HEADER_FILE_ONLY TRUE # tell compiler to not build model files
+       MACOSX_PACKAGE_LOCATION "${internal_asset_dir}/models/${rel_folder}")
+
+endforeach ()
+# Put presets in package
+set_source_files_properties(${preset_files} 
+    PROPERTIES 
+    HEADER_FILE_ONLY TRUE # tell compiler to not build model files
+    MACOSX_PACKAGE_LOCATION "${internal_asset_dir}/presets"
+)
+
+# Make an empty directory for renders
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${app_prefix}/${internal_asset_dir}/renders)
+
+set(gloo_dir ${PROJECT_SOURCE_DIR}/gloo)
 endif()
 # Include cpack
 include(CPack)
