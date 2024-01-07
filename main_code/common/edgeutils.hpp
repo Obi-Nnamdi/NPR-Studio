@@ -12,7 +12,7 @@
 namespace GLOO {
 
 // We only consider loops if they're more than 2 nodes long (3-length cycles and up)
-int edge_cycle_length = 3;
+const int edge_cycle_length = 3;
 
 // Function to perform depth-first search to find the longest chain
 void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t>>& adjList,
@@ -50,7 +50,6 @@ void dfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t
   // Backtrack
   currentPath.pop_back();
 }
-// TODO: Simplifying Polylines by either a.) index distance, or b.) physical distance
 
 /**
  * Splits polylines in `paths` into new ones, ensuring that no polylines over max_size are left in
@@ -122,6 +121,77 @@ void splitPolylines(std::vector<Polyline>& paths, int max_size) {
   paths = new_polylines;
 }
 
+/**
+ * Simplifies polylines based on the minimum distance (in pixels) between their points.
+ */
+void simplifyPolylines(std::vector<Polyline>& polylines, const PositionArray& meshPositions,
+                       const float& minPixelDistance, const CameraComponent* camera,
+                       const glm::vec2 window_size, const glm::mat4& model_matrix) {
+  glm::mat4 worldToNDC(camera->GetProjectionMatrix() * camera->GetViewMatrix());
+  std::vector<glm::vec2> modelScreenspacePositions;
+
+  // Transform model coordinates to screenspace coordinates to compare pixel distances
+  for (glm::vec3 objectPosition : meshPositions) {
+    // Convert to world coordinates, then NDC coordinates, then do perspective division, then go to
+    // screenspace coordinates
+    glm::vec3 world_position = glm::vec3(model_matrix * glm::vec4(objectPosition, 1.0));
+    glm::vec4 ndc_position = worldToNDC * glm::vec4(world_position, 1.0);
+    glm::vec3 perspective_position = glm::vec3(ndc_position) / ndc_position.w;
+    glm::vec2 screenspace_coordinates =
+        (glm::vec2(perspective_position) + 1.0f) * 0.5f * window_size;
+    modelScreenspacePositions.push_back(screenspace_coordinates);
+  }
+
+  std::vector<Polyline> newPolylines;
+  // Iterate through contents of each path, and only emit vertices that have a pixel distance that's
+  // greater our threshold
+  for (auto& polyline : polylines) {
+    // Disregard paths that have less than two vertices
+    if (polyline.path.size() < 2) {
+      continue;
+    }
+
+    std::vector<size_t> newPath;
+    size_t current_path_start =
+        polyline.path[0];  // the polyline index we're currently comparing to
+    newPath.push_back(current_path_start);
+    // Go until the next to last vertex
+    for (int i = 1; i < polyline.path.size() - 1; i++) {
+      auto vertex = polyline.path[i];
+      // If we now have a segment that's greater than the pixel distance, add it, and start
+      // processing from the end of the path
+      if (glm::abs(glm::distance(modelScreenspacePositions[vertex],
+                                 modelScreenspacePositions[current_path_start]) >=
+                   minPixelDistance)) {
+        newPath.push_back(vertex);
+        current_path_start = vertex;
+      }
+    }
+    // Always add the last vertex
+    newPath.push_back(polyline.path.back());
+
+    // Disregard new paths that have two vertices but are smaller than our pixel distance
+    if (newPath.size() == 2) {
+      if (glm::abs(glm::distance(modelScreenspacePositions[newPath.front()],
+                                 modelScreenspacePositions[newPath.back()]) < minPixelDistance)) {
+        continue;
+      }
+    }
+
+    // Create new simplified polyline
+    Polyline newPolyline;
+    newPolyline.path = newPath;
+    // If the polyline was a loop, it stays a loop
+    newPolyline.is_loop = polyline.is_loop;
+    newPolylines.push_back(newPolyline);
+    int simplifiedVerts = polyline.path.size() - newPath.size();
+    if (simplifiedVerts > 5) {
+      std::cout << "Removed " << simplifiedVerts << "verts" << std::endl;
+    }
+  }
+  polylines = newPolylines;
+}
+
 // Performs dfs on `node` using give adjList, but visits every edge instead of just visiting every
 // node.
 void edgeDfs(size_t node, const std::unordered_map<size_t, std::unordered_set<size_t>>& adjList,
@@ -135,8 +205,8 @@ void edgeDfs(size_t node, const std::unordered_map<size_t, std::unordered_set<si
   for (size_t neighbor : adjList.at(node)) {
     Edge connection = Edge(node, neighbor);
 
-    // TODO: if we have multiple neighbors, find a way to combine the paths produced by all of them
-    // together somehow
+    // TODO: if we have multiple neighbors, find a way to combine the paths produced by all of
+    // them together somehow
     if (visited.find(connection) == visited.end()) {
       // Mark connection as visited
       visited.insert(connection);
@@ -157,8 +227,8 @@ void edgeDfs(size_t node, const std::unordered_map<size_t, std::unordered_set<si
       // We only consider loops if they're more than 2 nodes long (3-length cycles and up)
       line.is_loop = firstElt == lastElt && currentPath.size() >= edge_cycle_length;
       line.path = currentPath;
-      // Remove the last element from the polyline if the line is a loop since it's the same as the
-      // first (allows for easier logic later)
+      // Remove the last element from the polyline if the line is a loop since it's the same as
+      // the first (allows for easier logic later)
       if (line.is_loop) {
         line.path.pop_back();
       }
@@ -172,10 +242,10 @@ void edgeDfs(size_t node, const std::unordered_map<size_t, std::unordered_set<si
 
 /**
  * Function to transform edges to polylines. A polyline is a consecutive list of vertices that
- * traverse a "chain" of connected vertices in a graph. Every vertex is guaranteed to be represented
- * at aleast once in the list of polylines. Unfortunately, there's no guarantee that the polylines
- * are efficient, i.e. that the longest polyline represents the longest possible chain length of the
- * graph (since that is an NP-hard problem).
+ * traverse a "chain" of connected vertices in a graph. Every vertex is guaranteed to be
+ * represented at aleast once in the list of polylines. Unfortunately, there's no guarantee that
+ * the polylines are efficient, i.e. that the longest polyline represents the longest possible
+ * chain length of the graph (since that is an NP-hard problem).
  */
 std::vector<Polyline> edgesToPolylines(const std::vector<Edge>& edges) {
   // Build an adjacency list from the edges

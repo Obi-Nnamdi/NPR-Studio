@@ -93,6 +93,8 @@ class OutlineNode : public SceneNode {
   void SetMeshVisibility(bool visible);
   // Set Performance Mode status
   void SetPerformanceModeStatus(bool enabled);
+  void SetEdgeSimplifyStatus(bool enabled);
+  void SetEdgeSimplifyThreshold(float minPixelDistance);
 
  private:
   void SetupEdgeMaps();
@@ -133,11 +135,13 @@ class OutlineNode : public SceneNode {
   bool show_border_edges_ = true;
   bool show_crease_edges_ = true;
   bool enable_performance_mode_ = false;  // TODO should this just be another OutlineMethod?
+  bool edge_simplify_status_ = false;     // TODO should this just be another OutlineMethod?
   OutlineMethod outline_method_ = STANDARD;
 
   const float line_bias_ =
       0.001 / 2;  // Controls distance from mesh that outlines are rendered from
   float crease_threshold_ = glm::radians(30.f);
+  float edge_simplify_threshold_ = 5;  // in pixels
   const Scene *parent_scene_;
   bool debug_ = false;  // Controls printing of various information in outline rendering
 };

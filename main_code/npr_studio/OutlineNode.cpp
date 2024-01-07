@@ -3,6 +3,7 @@
 #include <chrono>
 #include <glm/gtx/string_cast.hpp>
 
+#include "gloo/InputManager.hpp"
 #include "gloo/Material.hpp"
 #include "gloo/MeshLoader.hpp"
 #include "gloo/SceneNode.hpp"
@@ -25,7 +26,6 @@ OutlineNode::OutlineNode(const Scene* scene, const std::shared_ptr<VertexObject>
     : SceneNode(), parent_scene_(scene) {
   // Create things we need for rendering
   mesh_ = mesh == nullptr ? PrimitiveFactory::CreateCylinder(1.f, 1, 32) : mesh;
-  // TODO debug miter join stuff with CreateQuad();
 
   // Since our mesh is static, we only need to set the outline mesh's vertex positions once
   // (we'll change the indices a lot though).
@@ -235,6 +235,10 @@ void OutlineNode::SetOutlineMethod(OutlineMethod method) {
 
 void OutlineNode::SetMeshVisibility(bool visible) { mesh_node_->SetActive(visible); }
 void OutlineNode::SetPerformanceModeStatus(bool enabled) { enable_performance_mode_ = enabled; }
+void OutlineNode::SetEdgeSimplifyStatus(bool enabled) { edge_simplify_status_ = enabled; }
+void OutlineNode::SetEdgeSimplifyThreshold(float minPixelDistance) {
+  edge_simplify_threshold_ = minPixelDistance;
+}
 
 void OutlineNode::CalculateFaceDirections() {
   // TODO: this is treated as an orthographic projection, try doing this with persepctive projection
@@ -343,8 +347,6 @@ void OutlineNode::RenderEdges() {
   outline_mesh_->UpdateIndices(std::move(newIndices));
 
   // Reset Polyline edge nodes
-  // TODO: you can do better here but for now this is fine
-  // TODO: If nothing changed, don't even turn off anything
   // TODO: Polyline node arrays for each edge type (so you can turn them on and off?)
   for (auto& polylineNode : polyline_nodes_) {
     polylineNode->SetActive(false);
@@ -356,11 +358,23 @@ void OutlineNode::RenderEdges() {
   // polylineGroups if they're being rendered
   // If we're updating edges, use global border and crease edge polyline caches and update silhoutte
   // edges dynamically
-  auto polylineGroups = {edgesToPolylines(renderedSilhouetteEdges),
-                         edgesToPolylines(renderedCreaseEdges),
-                         edgesToPolylines(renderedBorderEdges)};
+  std::vector<std::vector<Polyline>> polylineGroups = {edgesToPolylines(renderedSilhouetteEdges),
+                                                       edgesToPolylines(renderedCreaseEdges),
+                                                       edgesToPolylines(renderedBorderEdges)};
 
   auto& positions = outline_mesh_->GetPositions();
+  // Simplify polylines
+  if (edge_simplify_status_) {
+    // Simplify and split polylines
+    auto cameraPointer = parent_scene_->GetActiveCameraPtr();
+    glm::vec2 window_size = InputManager::GetInstance().GetWindowSize();
+    glm::mat4 model_matrix = GetTransform().GetLocalToWorldMatrix();
+    for (auto& polylines : polylineGroups) {
+      simplifyPolylines(polylines, positions, edge_simplify_threshold_, cameraPointer, window_size,
+                        model_matrix);
+    }
+  }
+
   auto material = GetComponentPtr<MaterialComponent>()->GetMaterial();
   auto material_ptr = std::make_shared<Material>(material);
   // Render polylines in passes
