@@ -271,11 +271,6 @@ void OutlineNode::Update(double delta_time) {
   // Set new value of is_camera_moving_.
   is_camera_moving_ = isCameraMoving;
 
-  // std::cout << "Is Moving: " << (isCameraMoving ? "true" : "false") << std::endl;
-
-  // TODO: Don't need to update anything if the camera isn't moving, except for the first time when
-  // the camera stops (e.g. for miter joins).
-
   // Silhouette edges should be rerenedered if we've changed their status (original variable value)
   // or if the camera has moved (is_camera_moving_).
   update_silhouette_ = update_silhouette_ || is_camera_moving_;
@@ -287,7 +282,6 @@ void OutlineNode::Update(double delta_time) {
     ComputeSilhouetteEdges();
   }
 
-  // TODO performance mode is currently broken.
   RenderEdges();
 
   // Now that we've updated and rendered our edges, we don't need to do it again.
