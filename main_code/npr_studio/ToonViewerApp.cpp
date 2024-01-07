@@ -523,6 +523,7 @@ void ToonViewerApp::UpdateActiveModel() {
 }
 
 void ToonViewerApp::PushAllGUIValues() {
+  sun_node_->SetLightType(light_type_);
   SetShadingType(shading_type_);
   UpdateSilhouetteStatus();
   UpdateCreaseStatus();
@@ -565,6 +566,7 @@ void ToonViewerApp::DrawGUI() {
     // Button for toggling light visibility
     if (ImGui::Button("Toggle Light Type (Point/Directional)")) {
       sun_node_->ToggleLight();
+      light_type_ = sun_node_->GetLightType();
     }
     ImGui::Separator();
 

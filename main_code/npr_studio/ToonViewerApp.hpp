@@ -53,6 +53,7 @@ class ToonViewerApp : public Application {
 
   std::string model_filename_;
   SunNode* sun_node_;
+  LightType light_type_ = LightType::Directional;
   std::vector<OutlineNode*> outline_nodes_;
 
   bool show_silhouette_ = true;
