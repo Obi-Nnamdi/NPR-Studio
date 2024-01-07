@@ -12,7 +12,7 @@ class ToonShader : public ShaderProgram {
   ToonShader();
   void SetTargetNode(const SceneNode& node, const glm::mat4& model_matrix) const override;
   void SetCamera(const CameraComponent& camera) const override;
-  void SetLightSource(const LightComponent& componentt) const override;
+  void SetLightSource(const LightComponent& component) const override;
 
  private:
   void AssociateVertexArray(VertexArray& vertex_array) const;
