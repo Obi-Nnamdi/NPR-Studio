@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(npr_studio VERSION 0.1.0)
+project(npr_studio VERSION 0.2.0)
 message(STATUS "Building NPR Studio...")
 # Otherwise IMGUI may pick GLEW as GL loader
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIMGUI_IMPL_OPENGL_LOADER_GLAD")
