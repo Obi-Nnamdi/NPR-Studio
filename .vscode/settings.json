@@ -73,6 +73,20 @@
     "functional": "cpp",
     "thread": "cpp",
     "__functional_base": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "forward_list": "cpp",
+    "iterator": "cpp",
+    "numeric": "cpp",
+    "valarray": "cpp",
+    "cfenv": "cpp",
+    "cinttypes": "cpp",
+    "codecvt": "cpp",
+    "future": "cpp",
+    "list": "cpp",
+    "queue": "cpp",
+    "regex": "cpp",
+    "set": "cpp",
+    "strstream": "cpp",
+    "random": "cpp"
   }
 }
