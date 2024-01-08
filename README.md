@@ -16,6 +16,7 @@ This project started as the final project of MIT's 6.4400 - "Computer Graphics" 
   * If no .mtl file with diffuse colors is specified, then default colors are used to render the .obj mesh.
 * Shading meshes with a Tone Mapping or Cartoon (Toon) shader
   * Custom colors can be specified for the illuminated/shadow colors of each shader.
+* Changing material properties of meshes (diffuse/specular).
 * Rendering the silhouette, crease, and/or border edges of an object
   * Editable outline thickness and color
   * Option to render edges with miter joins between them for cleaner rendering
@@ -34,6 +35,7 @@ This project started as the final project of MIT's 6.4400 - "Computer Graphics" 
 | ![bookshelf](assets/screenshots/bookshelf_blueprint.png)|![sphere](./assets/screenshots/temp_sphere.png) |
 | ![lamp](assets/screenshots/lamp.png) | ![bunny](./assets/screenshots/bunny.png) |
 
+![Screen Recording of Application](./assets/screenshots/screenrecord1_optimized.gif)
 ## Installing
 *(Section partially adapted from an MIT 6.4400 assignment handout)*
 
@@ -119,7 +121,7 @@ To move around the scene, click and drag the left mouse button for orbiting, rig
 
 When exporting your model, ensure that the .obj mesh is properly triangulated. This can be done in Blender by checking the "Triangulated Mesh" option in the .obj exporter.
 
-The application will calculate its own normals for the .obj file if none are specified. I've found that importing models exported with custom normals from Blender doesn't work well. If you want to keep your custom normals on your object, apply an "edge split" modifier to your object in Blender before exporting. Feel free to try getting it to work with the 3D software of your choice though.
+The application will calculate its own normals for the .obj file if none are specified. I've found that importing models exported with custom normals from Blender doesn't work well. If you want to emulate "auto smooth" normals on your object, apply an "edge split" modifier to your object in Blender before exporting. Feel free to try getting it to work with the 3D software of your choice though.
 
 If you want to render your own .obj model with custom colors, ensure that the color you want to appear in the renderer is part of the model's **diffuse** component. Ensure that the .obj file has a material group for each of the object's materials (no material groups means that the object is rendered without its own custom colors). This can be done in Blender by checking the "Material Groups" option in the .obj exporter.
 
