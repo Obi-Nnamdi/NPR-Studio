@@ -119,7 +119,7 @@ To move around the scene, click and drag the left mouse button for orbiting, rig
 
 When exporting your model, ensure that the .obj mesh is properly triangulated. This can be done in Blender by checking the "Triangulated Mesh" option in the .obj exporter.
 
-The application will calculate its own normals for the .obj file if none are specified. I've found that importing models exported with custom normals from Blender doesn't work well. Feel free to try using the 3D software of your choice though.
+The application will calculate its own normals for the .obj file if none are specified. I've found that importing models exported with custom normals from Blender doesn't work well. If you want to keep your custom normals on your object, apply an "edge split" modifier to your object in Blender before exporting. Feel free to try getting it to work with the 3D software of your choice though.
 
 If you want to render your own .obj model with custom colors, ensure that the color you want to appear in the renderer is part of the model's **diffuse** component. Ensure that the .obj file has a material group for each of the object's materials (no material groups means that the object is rendered without its own custom colors). This can be done in Blender by checking the "Material Groups" option in the .obj exporter.
 
