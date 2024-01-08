@@ -87,6 +87,9 @@ class OutlineNode : public SceneNode {
   void OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor,
                                     float outlineFactor);
   void SetOutlineThickness(const float &width);
+  void SetDiffuseIntensity(const float &intensity);
+  void SetSpecularIntensity(const float &intensity);
+  void SetShininess(const float &shininess);
   // Change outline method used to render outlines
   void SetOutlineMethod(OutlineMethod method);
   // Set mesh visibilty
@@ -105,6 +108,8 @@ class OutlineNode : public SceneNode {
   void CalculateFaceDirections();
   void UpdatePolylineNodeMaterials(const std::shared_ptr<Material> material);
   void DoRenderSetup(std::shared_ptr<ShaderProgram> mesh_shader = nullptr);
+  void ChangeMaterial(Material material);
+  Material GetMeshMaterial();
 
   // Modify outline_mesh_ to give it indices corresponding only to edges of the types that are true.
   void RenderEdges();

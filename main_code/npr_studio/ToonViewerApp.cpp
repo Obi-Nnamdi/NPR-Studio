@@ -64,6 +64,17 @@ void SetNPRColorsFromDiffuse(GLOO::MeshData& mesh_data, float illuminationFactor
   }
 }
 
+// Fixes material intensities on imported materials (they're not properly set when doing .obj
+// importing)
+void SetMaterialIntensities(GLOO::MeshData& mesh_data) {
+  for (auto& g : mesh_data.groups) {
+    g.material->SetDiffuseIntensity(1.);
+    g.material->SetSpecularIntensity(0.);
+    // The shininess of a material is actually set in the obj importer, but we force update it
+    g.material->SetShininess(1.);
+  }
+}
+
 // Prints vector of floats to a space separated string
 std::string floatVectorToString(const std::vector<float>& values) {
   std::string output = "";
@@ -142,6 +153,7 @@ void ToonViewerApp::SetupScene() {
     MeshData mesh_data = MeshLoader::Import(model_filename_);
     SetAmbientToDiffuse(mesh_data);
     SetNPRColorsFromDiffuse(mesh_data, 1.2, .5, 1);
+    SetMaterialIntensities(mesh_data);
 
     std::shared_ptr<VertexObject> vertex_obj = std::move(mesh_data.vertex_obj);
 
@@ -265,6 +277,24 @@ void ToonViewerApp::SetOutlineColor(const glm::vec3& color) {
   }
 }
 
+void ToonViewerApp::UpdateDiffuseIntensity() {
+  for (auto node : outline_nodes_) {
+    node->SetDiffuseIntensity(diffuse_intensity_);
+  }
+}
+
+void ToonViewerApp::UpdateSpecularIntensity() {
+  for (auto node : outline_nodes_) {
+    node->SetSpecularIntensity(specular_intensity_);
+  }
+}
+
+void ToonViewerApp::UpdateShininess() {
+  for (auto node : outline_nodes_) {
+    node->SetShininess(shininess_);
+  }
+}
+
 void ToonViewerApp::OverrideNPRColorsFromDiffuse(float illuminationFactor, float shadowFactor,
                                                  float outlineFactor) {
   for (auto node : outline_nodes_) {
@@ -350,6 +380,12 @@ void ToonViewerApp::SaveRenderSettings(const std::string filename, const bool& i
       file << "shader\n";
       file << "type"
            << " " << shading_type_ << "\n";
+      file << "diff_intensity"
+           << " " << diffuse_intensity_ << "\n";
+      file << "spec_intensity"
+           << " " << specular_intensity_ << "\n";
+      file << "shininess"
+           << " " << shininess_ << "\n";
       file << "end\n";
       file << "\n";
     }
@@ -434,11 +470,23 @@ void ToonViewerApp::LoadRenderSettings(const std::string filename) {
           }
           std::vector<std::string> tokens = Split(line, ' ');
           std::string command = tokens[0];
+          std::string value = tokens[1];
           if (command == "type") {
-            std::string value = tokens[1];
             ToonShadingType shading_type = static_cast<ToonShadingType>(std::stoi(value));
             shading_type_ = shading_type;
             SetShadingType(shading_type_);
+          }
+          if (command == "diff_intensity") {
+            diffuse_intensity_ = std::stof(value);
+            UpdateDiffuseIntensity();
+          }
+          if (command == "spec_intensity") {
+            specular_intensity_ = std::stof(value);
+            UpdateSpecularIntensity();
+          }
+          if (command == "shininess") {
+            shininess_ = std::stof(value);
+            UpdateShininess();
           }
         }
       }
@@ -538,6 +586,9 @@ void ToonViewerApp::PushAllGUIValues() {
   SetShadowColor(vectorToVec3(shadow_color_));
   SetOutlineColor(vectorToVec3(outline_color_));
   SetBackgroundColor(vectorToVec4(background_color_));
+  UpdateDiffuseIntensity();
+  UpdateSpecularIntensity();
+  UpdateShininess();
 }
 
 void ToonViewerApp::DrawGUI() {
@@ -592,6 +643,20 @@ void ToonViewerApp::DrawGUI() {
     if (ImGui::ColorEdit3("Outline Color", &outline_color_.front())) {
       SetOutlineColor(vectorToVec3(outline_color_));
     }
+
+    ImGui::Separator();
+    ImGui::Text("Material Properties:");
+    if (ImGui::SliderFloat("Diffuse Intensity", &diffuse_intensity_, 0, 1, "%.3f")) {
+      UpdateDiffuseIntensity();
+    }
+    if (ImGui::SliderFloat("Specular Intensity", &specular_intensity_, 0, 1, "%.3f")) {
+      UpdateSpecularIntensity();
+    }
+    if (ImGui::SliderFloat("Shininess", &shininess_, 0, 30, "%.2f")) {
+      UpdateShininess();
+    }
+    ImGui::Separator();
+
     if (ImGui::Button("Reset Colors to Material Diffuse")) {
       OverrideNPRColorsFromDiffuse(1.2, 0.5);
     }
@@ -718,6 +783,7 @@ void ToonViewerApp::DrawGUI() {
         *setting = false;
       }
     }
+    // TODO: add tooltips
     ImGui::Columns(3, "settings columns", false);
     ImGui::Checkbox("Color Settings", &includeColorInfo);
     ImGui::NextColumn();

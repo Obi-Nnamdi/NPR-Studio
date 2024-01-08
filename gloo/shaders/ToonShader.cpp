@@ -54,13 +54,12 @@ void ToonShader::SetTargetNode(const SceneNode& node, const glm::mat4& model_mat
     material_ptr = &material_component_ptr->GetMaterial();
   }
 
-  // For doing tone mapping between cool and warm tones
-  // float b = .8;
-  // float y = .8;
-  // glm::vec3 (0, 0, b);
-  // glm::vec3 (y, y, 0);
   SetUniform("material.shadow_color", material_ptr->GetShadowColor());
   SetUniform("material.illuminated_color", material_ptr->GetIlluminatedColor());
+
+  SetUniform("material.diffuse_intensity", material_ptr->GetDiffuseIntensity());
+  SetUniform("material.specular_intensity", material_ptr->GetSpecularIntensity());
+  SetUniform("material.shininess", material_ptr->GetShininess());
 }
 
 void ToonShader::SetCamera(const CameraComponent& camera) const {

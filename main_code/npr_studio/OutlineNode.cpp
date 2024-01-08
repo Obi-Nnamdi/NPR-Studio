@@ -165,30 +165,15 @@ void OutlineNode::SetCreaseThreshold(float degrees) {
 }
 
 void OutlineNode::SetIlluminatedColor(const glm::vec3& color) {
-  // Make sure that the mesh is always active before changing colors
-  auto isActiveOld = mesh_node_->IsActive();
-  SetMeshVisibility(true);
-
-  auto material = mesh_node_->GetComponentPtr<MaterialComponent>()->GetMaterial();
+  auto material = GetMeshMaterial();
   material.SetIlluminatedColor(color);
-  mesh_node_->GetComponentPtr<MaterialComponent>()->SetMaterial(
-      std::make_shared<Material>(material));
-  // Reset active state to old value
-  SetMeshVisibility(isActiveOld);
+  ChangeMaterial(material);
 }
 
 void OutlineNode::SetShadowColor(const glm::vec3& color) {
-  // Make sure that the mesh is always active before changing colors
-  auto isActiveOld = mesh_node_->IsActive();
-  SetMeshVisibility(true);
-
-  auto material = mesh_node_->GetComponentPtr<MaterialComponent>()->GetMaterial();
+  auto material = GetMeshMaterial();
   material.SetShadowColor(color);
-  mesh_node_->GetComponentPtr<MaterialComponent>()->SetMaterial(
-      std::make_shared<Material>(material));
-
-  // Reset active state to old value
-  SetMeshVisibility(isActiveOld);
+  ChangeMaterial(material);
 }
 
 void OutlineNode::SetOutlineColor(const glm::vec3& color) {
@@ -226,6 +211,48 @@ void OutlineNode::SetOutlineThickness(const float& width) {
   GetComponentPtr<MaterialComponent>()->SetMaterial(material_ptr);
   // Update polyline outline nodes
   UpdatePolylineNodeMaterials(material_ptr);
+}
+
+void OutlineNode::SetDiffuseIntensity(const float& intensity) {
+  auto material = GetMeshMaterial();
+  material.SetDiffuseIntensity(intensity);
+  ChangeMaterial(material);
+}
+void OutlineNode::SetSpecularIntensity(const float& intensity) {
+  auto material = GetMeshMaterial();
+  material.SetSpecularIntensity(intensity);
+  ChangeMaterial(material);
+}
+void OutlineNode::SetShininess(const float& shininess) {
+  auto material = GetMeshMaterial();
+  material.SetShininess(shininess);
+  ChangeMaterial(material);
+}
+
+void OutlineNode::ChangeMaterial(Material material) {
+  // Make sure that the mesh is always active before changing material properties
+  auto isActiveOld = mesh_node_->IsActive();
+  SetMeshVisibility(true);
+
+  // Change material
+  mesh_node_->GetComponentPtr<MaterialComponent>()->SetMaterial(
+      std::make_shared<Material>(material));
+
+  // Reset mesh visibilty to old value
+  SetMeshVisibility(isActiveOld);
+}
+
+Material OutlineNode::GetMeshMaterial() {
+  // Make sure that the mesh is always active before getting material
+  auto isActiveOld = mesh_node_->IsActive();
+  SetMeshVisibility(true);
+
+  auto material = mesh_node_->GetComponentPtr<MaterialComponent>()->GetMaterial();
+
+  // Reset mesh visibility to old value
+  SetMeshVisibility(isActiveOld);
+
+  return material;
 }
 
 void OutlineNode::SetOutlineMethod(OutlineMethod method) {

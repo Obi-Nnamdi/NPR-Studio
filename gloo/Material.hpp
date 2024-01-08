@@ -16,7 +16,9 @@ class Material {
         illuminated_color_(0.0f),
         shadow_color_(0.0f),
         outline_color_(0.0f),
-        outline_thickness_(0.0f) {}
+        outline_thickness_(0.0f),
+        diffuse_intensity_(0.0f),
+        specular_intensity_(0.0f) {}
 
   // Realistic Material Constructor
   Material(const glm::vec3& ambient_color, const glm::vec3& diffuse_color,
@@ -28,19 +30,26 @@ class Material {
         illuminated_color_(0.0f),
         shadow_color_(0.0f),
         outline_color_(0.0f),
-        outline_thickness_(0.0f) {}
+        outline_thickness_(0.0f),
+        diffuse_intensity_(1.0f),
+        specular_intensity_(0.0f) {}
 
   // NPR Material Constructor (arguments are weird because of the realistic material constructor
   // already existing)
   Material(const glm::vec3& illuminated_color, const glm::vec3& shadow_color,
-           const float& outline_thickness, const glm::vec3& outline_color)
+           const float& outline_thickness, const glm::vec3& outline_color,
+           const float& diffuse_intensity = 1.0f, const float& specular_intensity = 0.0f,
+           const float& shininess = 1.0f)
       : ambient_color_(0.0f),
         diffuse_color_(0.0f),
         specular_color_(0.0f),
+        shininess_(shininess),
         illuminated_color_(illuminated_color),
         shadow_color_(shadow_color),
         outline_color_(outline_color),
-        outline_thickness_(outline_thickness) {}
+        outline_thickness_(outline_thickness),
+        diffuse_intensity_(diffuse_intensity),
+        specular_intensity_(specular_intensity) {}
 
   static const Material& GetDefault() {
     static Material default_material(glm::vec3(0.5f, 0.1f, 0.2f),
@@ -98,6 +107,12 @@ class Material {
   void SetOutlineThickness(const float& width) { outline_thickness_ = width; }
   float GetOutlineThickness() const { return outline_thickness_; }
 
+  void SetDiffuseIntensity(const float& intensity) { diffuse_intensity_ = intensity; }
+  float GetDiffuseIntensity() const { return diffuse_intensity_; }
+
+  void SetSpecularIntensity(const float& intensity) { specular_intensity_ = intensity; }
+  float GetSpecularIntensity() const { return specular_intensity_; }
+
   // TODO: SetCoolColor and SetWarmColor options?
   void SetAmbientTexture(std::shared_ptr<Texture> tex) {
     ambient_tex_ = std::move(tex);
@@ -133,6 +148,8 @@ class Material {
   glm::vec3 shadow_color_;
   glm::vec3 outline_color_;
   float outline_thickness_;  // in pixels
+  float diffuse_intensity_;
+  float specular_intensity_;
   std::shared_ptr<Texture> ambient_tex_;
   std::shared_ptr<Texture> diffuse_tex_;
   std::shared_ptr<Texture> specular_tex_;

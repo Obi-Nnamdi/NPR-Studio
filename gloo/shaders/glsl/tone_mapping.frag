@@ -27,6 +27,9 @@ struct DirectionalLight {
 struct Material {
     vec3 low_color;
     vec3 high_color;
+    float shininess;
+    float specular_intensity;
+    float diffuse_intensity;
 };
 
 in vec3 world_position;
@@ -81,6 +84,18 @@ vec3 GetSpecularColor() {
     return vec3(0.0);
 }
 
+float GetSpecularIntensity() {
+    return material.specular_intensity;
+}
+
+float GetDiffuseIntensity() {
+    return material.diffuse_intensity;
+}
+
+float GetShininess() {
+    return material.shininess;
+}
+
 vec3 GetHighColor() {
     return material.high_color;
 }
@@ -97,14 +112,22 @@ vec3 CalcAmbientLight() {
 vec3 CalcPointLight(vec3 normal, vec3 view_dir) {
     PointLight light = point_light;
     vec3 light_dir = normalize(light.position - world_position);
+    
+    // Matte shading
+    float lambertian_term = dot(normal, light_dir); // from [-1, 1]
+    float diffuse_term = GetDiffuseIntensity() * ((1 + lambertian_term) / 2);
+    
+    // Specular shading
+    vec3 reflect_dir = reflect(-light_dir, normal);
+    float specular_term = GetSpecularIntensity() * pow(max(dot(view_dir, reflect_dir), 0.0), GetShininess());
 
+    // Add in point light attenuation
     float distance = length(light.position - world_position);
     float attenuation = 1.0 / (light.attenuation.x + 
         light.attenuation.y * distance + 
         light.attenuation.z * (distance * distance));
 
-    float lambertian_term = dot(normal, light_dir); // from [-1, 1]
-    float color_mix_factor = attenuation * (1 + lambertian_term) / 2; // from [0, 1]
+    float color_mix_factor = clamp(attenuation * (diffuse_term + specular_term), 0, 1); // clamp from [0, 1]
     vec3 tone_color = color_mix_factor * GetHighColor() + (1 - color_mix_factor) * GetLowColor();
 
     return tone_color;
@@ -113,12 +136,17 @@ vec3 CalcPointLight(vec3 normal, vec3 view_dir) {
 vec3 CalcDirectionalLight(vec3 normal, vec3 view_dir) {
     // Shade using Tone Mapping
     vec3 light_dir = normalize(-directional_light.direction);
+    // Matte shading
     float lambertian_term = dot(normal, light_dir); // from [-1, 1]
-    float color_mix_factor =(1 + lambertian_term) / 2; // from [0, 1]
-    // Tone mapping equation. Adapted from Gooch et al. (1998):
+    float diffuse_term = GetDiffuseIntensity() * ((1 + lambertian_term) / 2);
     
+    // Specular shading
+    vec3 reflect_dir = reflect(-light_dir, normal);
+    float specular_term = GetSpecularIntensity() * pow(max(dot(view_dir, reflect_dir), 0.0), GetShininess());
+
+    // Tone mapping equation. Adapted from Gooch et al. (1998):
     // Use color mix factor to mix between high and low color:
-    // vec3 tone_color = mix(GetLowColor(), GetHighColor(), color_mix_factor); // alternative strategy
+    float color_mix_factor = clamp(diffuse_term + specular_term, 0, 1); // clamp from [0, 1]
     vec3 tone_color = color_mix_factor * GetHighColor() + (1 - color_mix_factor) * GetLowColor();
 
     return tone_color;

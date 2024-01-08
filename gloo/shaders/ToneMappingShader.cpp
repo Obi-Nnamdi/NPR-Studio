@@ -61,8 +61,12 @@ void ToneMappingShader::SetTargetNode(const SceneNode& node, const glm::mat4& mo
   // float y = .8;
   // glm::vec3(0, 0, b);
   // glm::vec3(y, y, 0);
-  SetUniform("material.low_color", material_ptr->GetShadowColor());        // black low color
-  SetUniform("material.high_color", material_ptr->GetIlluminatedColor());  // white high color
+  SetUniform("material.low_color", material_ptr->GetShadowColor());
+  SetUniform("material.high_color", material_ptr->GetIlluminatedColor());
+
+  SetUniform("material.diffuse_intensity", material_ptr->GetDiffuseIntensity());
+  SetUniform("material.specular_intensity", material_ptr->GetSpecularIntensity());
+  SetUniform("material.shininess", material_ptr->GetShininess());
 }
 
 void ToneMappingShader::SetCamera(const CameraComponent& camera) const {

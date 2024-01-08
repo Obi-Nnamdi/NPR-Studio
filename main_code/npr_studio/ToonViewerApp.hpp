@@ -32,6 +32,9 @@ class ToonViewerApp : public Application {
   void SetIlluminatedColor(const glm::vec3& color);
   void SetShadowColor(const glm::vec3& color);
   void SetOutlineColor(const glm::vec3& color);
+  void UpdateDiffuseIntensity();
+  void UpdateSpecularIntensity();
+  void UpdateShininess();
 
   void OverrideNPRColorsFromDiffuse(float illuminationFactor = 1.5, float shadowFactor = .5,
                                     float outlineFactor = 1);
@@ -74,6 +77,9 @@ class ToonViewerApp : public Application {
   std::vector<float> illumination_color_;
   std::vector<float> shadow_color_;
   std::vector<float> outline_color_;
+  float diffuse_intensity_ = 1;
+  float specular_intensity_ = 0;
+  float shininess_ = 1;
 
   std::shared_ptr<ToonShader> toon_shader_;
   std::shared_ptr<ToneMappingShader> tone_mapping_shader_;
