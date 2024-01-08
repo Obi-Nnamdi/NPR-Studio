@@ -43,10 +43,11 @@ class ToonViewerApp : public Application {
 
   // TODO support high-quality renders
   void RenderImageToFile(const std::string filename, const std::string extension) const;
-  void SaveRenderSettings(const std::string filename, const bool& includeColorInfo = true,
-                          const bool& includeLightInfo = true, const bool& includeMeshInfo = true,
-                          const bool& includeOutlineInfo = true,
-                          const bool& includeShaderInfo = true);  // saves in assets/presets folder
+  void SaveRenderSettings(
+      const std::string filename, const bool& includeColorInfo = true,
+      const bool& includeLightInfo = true, const bool& includeMeshInfo = true,
+      const bool& includeOutlineInfo = true, const bool& includeShaderInfo = true,
+      const bool& includeMaterialInfo = true);          // saves in assets/presets folder
   void LoadRenderSettings(const std::string filename);  // loads from assets/presets folder
   // Destroys scene and resets it with model_filename_.
   void UpdateActiveModel();

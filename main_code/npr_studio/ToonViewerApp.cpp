@@ -353,7 +353,8 @@ void ToonViewerApp::RenderImageToFile(const std::string filename,
 void ToonViewerApp::SaveRenderSettings(const std::string filename, const bool& includeColorInfo,
                                        const bool& includeLightInfo, const bool& includeMeshInfo,
                                        const bool& includeOutlineInfo,
-                                       const bool& includeShaderInfo) {
+                                       const bool& includeShaderInfo,
+                                       const bool& includeMaterialInfo) {
   CreateDirectoryIfNotExists(GetPresetDir());
   std::string full_filename = GetPresetDir() + filename + ".npr";
   std::ofstream file(full_filename);
@@ -380,6 +381,12 @@ void ToonViewerApp::SaveRenderSettings(const std::string filename, const bool& i
       file << "shader\n";
       file << "type"
            << " " << shading_type_ << "\n";
+      file << "end\n";
+      file << "\n";
+    }
+    if (includeMaterialInfo) {
+      // Material Command - records info about material properties of objects
+      file << "material\n";
       file << "diff_intensity"
            << " " << diffuse_intensity_ << "\n";
       file << "spec_intensity"
@@ -476,6 +483,17 @@ void ToonViewerApp::LoadRenderSettings(const std::string filename) {
             shading_type_ = shading_type;
             SetShadingType(shading_type_);
           }
+        }
+      }
+      // Handle material settings
+      else if (line == "material") {
+        while (std::getline(file, line)) {
+          if (line == "end") {
+            break;
+          }
+          std::vector<std::string> tokens = Split(line, ' ');
+          std::string command = tokens[0];
+          std::string value = tokens[1];
           if (command == "diff_intensity") {
             diffuse_intensity_ = std::stof(value);
             UpdateDiffuseIntensity();
@@ -749,13 +767,14 @@ void ToonViewerApp::DrawGUI() {
     static bool includeMeshInfo = true;
     static bool includeOutlineInfo = true;
     static bool includeShaderInfo = true;
+    static bool includeMaterialInfo = true;
     static const std::vector<bool*> allSaveSettings = {&includeColorInfo, &includeLightInfo,
                                                        &includeMeshInfo, &includeOutlineInfo,
-                                                       &includeShaderInfo};
+                                                       &includeShaderInfo, &includeMaterialInfo};
     ImGui::SetNextItemWidth(ImGui::GetWindowWidth() * .3f);
     if (ImGui::Button("Save Settings")) {
       SaveRenderSettings(saveSettingsFilename, includeColorInfo, includeLightInfo, includeMeshInfo,
-                         includeOutlineInfo, includeShaderInfo);
+                         includeOutlineInfo, includeShaderInfo, includeMaterialInfo);
     }
     if (ImGui::IsItemHovered()) {
       ImGui::BeginTooltip();
@@ -794,6 +813,8 @@ void ToonViewerApp::DrawGUI() {
     ImGui::Checkbox("Mesh Settings", &includeMeshInfo);
     ImGui::NextColumn();
     ImGui::Checkbox("Shader Settings", &includeShaderInfo);
+    ImGui::NextColumn();
+    ImGui::Checkbox("Material Settings", &includeMaterialInfo);
     ImGui::NextColumn();
     ImGui::Columns(1);
     ImGui::Spacing();
