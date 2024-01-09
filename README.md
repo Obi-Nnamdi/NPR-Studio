@@ -36,7 +36,7 @@ This project started as the final project of MIT's 6.4400 - "Computer Graphics" 
 | ![lamp](assets/screenshots/lamp.png) | ![bunny](./assets/screenshots/bunny.png) |
 
 ![Screen Recording of Application](./assets/screenshots/screenrecord1_optimized.gif)
-## Installing
+## Manually Installing
 *(Section partially adapted from an MIT 6.4400 assignment handout)*
 
 This application requires a minimum version of OpenGL 3.3. You may have to update your graphics drivers.
@@ -77,6 +77,10 @@ cd build
 cmake ..  -DCMAKE_BUILD_TYPE=Release
 make
 ```
+
+For Linux/MacOS, you should see a generated executable under the `bin` folder of the `build` directory.
+
+For MacOS, you should also see a generated `npr_studio.app` file in the `build` directory.
 #### Windows
 You can use CMake-GUI to generate the build system of your choice:
 1. Set the source code location ("Where is the source code") to the project's root directory
@@ -84,9 +88,9 @@ You can use CMake-GUI to generate the build system of your choice:
 3. Click "Configure". The default configuration should suffice.
 4. After configuring, click "Generate".
 5. The build system files should be in the build directory.
-6. Open the NPR_STUDIO.slr file with Visual Studio, and build the solution with the build type with the solution configuration set to "RELEASE".
+6. Open the NPR_STUDIO.slr file with Visual Studio (can also click "Open Project" in CMake), and build the solution with the build type with the solution configuration set to "RELEASE" (under `Build` > `Build Solution`).
 
-After building the project, you should see an executable in the `build/Release` directory called "npr_studio". This is the application executable.
+After building the project, you should see an executable in the `build/bin/Release` directory called "npr_studio". This is the application executable, and you can click it to run the program.
 
 ## Usage
 ### Normal Execution

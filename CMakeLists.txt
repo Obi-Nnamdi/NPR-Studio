@@ -225,18 +225,20 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CMAKE_PROJECT_NAME}")
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
 
 # set human names to executables - creates start menu/desktop shortcuts for NSIS
-set(CPACK_PACKAGE_EXECUTABLES ${assignment_name} ${canonical_name})
+set(CPACK_PACKAGE_EXECUTABLES ${binary_name} ${canonical_name})
 set(CPACK_CREATE_DESKTOP_LINKS ${canonical_name})
 
 ##################################
 # zipping standard executable - done with standard "make"
 # This is just done for convenience on Apple machines.
-file(ARCHIVE_CREATE
-    OUTPUT "${binary_name}.zip"
-    PATHS 
-        "${binary_path}/"
-    FORMAT "zip")
-
+if (APPLE)
+    # TODO: permission denied bug when trying this on windows. 
+    file(ARCHIVE_CREATE
+        OUTPUT "${binary_name}.zip"
+        PATHS 
+            "${binary_path}/"
+        FORMAT "zip")
+endif()
 # If we're not on apple (windows or a unix-like system), create a package by just zipping the binary directory (like we just did)
 # TODO: add something specific for windows
 if (NOT APPLE)
