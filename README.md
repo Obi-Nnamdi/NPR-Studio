@@ -85,7 +85,7 @@ For Linux/MacOS, you should see a generated executable under the `bin` folder of
 
 For MacOS, you should also see a generated `npr_studio.app` file in the `build` directory.
 ##### Windows
-You can use CMake-GUI to generate the build system of your choice:
+You can use CMake-GUI and Visual Studio to build the application manually:
 1. Set the source code location ("Where is the source code") to the project's root directory
 2. Set the binary building location ("Where to build the binaries") to the root directory followed by build/.
 3. Click "Configure". The default configuration should suffice.
@@ -97,7 +97,7 @@ After building the project, you should see an executable in the `build/bin/Relea
 
 ## Usage
 ### Normal Execution
-All built executable files (i.e. UNIX executable, MacOSX .app) can be clicked on to open the application, but unix executable file. Models can be loaded from the application GUI.
+All built executable files (i.e. UNIX executable, MacOSX .app) can be clicked on to open the application. Models can be loaded from the application GUI.
 
 Note that for a MacOSX app, the models/presets/renders directories are inside of the app itself (found by clicking "show package contents" on the app).
 
@@ -137,7 +137,7 @@ When rendering a model with custom colors, you can tell the renderer to pull fro
 Textures are currently unsupported, and if your model has textures, either remove them from the model's .mtl file or copy the texture files to the model directory and relatively link to them so the .obj importer doesn't break.
 
 ## Editing Code
-If you add files, be sure to rerun `cmake` running `make`.
+If you add files to the project codebase, be sure to fully rebuild the application (i.e. run both `cmake` and `make`).
 
 ## High-Level Code Organization
 The main entry point of this code is [`main`](./main_code/npr_studio/main.cpp), which calls [`ToonViewerApp`](./main_code/npr_studio/ToonViewerApp.hpp), which sets up the application and GUI.
