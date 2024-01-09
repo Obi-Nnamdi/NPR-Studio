@@ -36,7 +36,10 @@ This project started as the final project of MIT's 6.4400 - "Computer Graphics" 
 | ![lamp](assets/screenshots/lamp.png) | ![bunny](./assets/screenshots/bunny.png) |
 
 ![Screen Recording of Application](./assets/screenshots/screenrecord1_optimized.gif)
-## Manually Installing
+## Installing
+To install the application, download the appropriate package for your OS from the [Releases](https://github.com/Obi-Nnamdi/NPR-Studio/releases) page. To manually build the application from its source code, read the [Manually Installing](#manually-installing) section.
+
+### Manually Installing
 *(Section partially adapted from an MIT 6.4400 assignment handout)*
 
 This application requires a minimum version of OpenGL 3.3. You may have to update your graphics drivers.
@@ -45,15 +48,15 @@ This application uses C++ 11.
 
 To install NPR Studio, first **download the source code of this project as a .zip** and extract it in the directory you want to run it in.
 
-### Installing Build Tools
+#### Installing Build Tools
 
 This project requires CMake, g++, and other building tools for compiling C++. They can be installed for various Operating Systems as follows:
 
-#### Linux
+##### Linux
 ```Shell
 sudo apt-get install g++-5 build-essential cmake
 ```
-#### MacOS
+##### MacOS
 1. Install Xcode
 2. Install Xcode command-line tools:
 ```Shell
@@ -64,12 +67,12 @@ xcode-select --install
 brew update
 brew install cmake
 ```
-#### Windows
+##### Windows
 1. Download the [CMake Windows installer](https://cmake.org/download/).
 2. Download the newest version of Visual Studio (the community version is free at https://visualstudio.microsoft.com/vs/), and install the necessary C++ tools through Visual Studio (or in your preferred way).
 
-### Building
-#### Linux / MacOS
+#### Building
+##### Linux / MacOS
 Run the following commands at the project's root directory:
 ```Shell
 mkdir build
@@ -81,7 +84,7 @@ make
 For Linux/MacOS, you should see a generated executable under the `bin` folder of the `build` directory.
 
 For MacOS, you should also see a generated `npr_studio.app` file in the `build` directory.
-#### Windows
+##### Windows
 You can use CMake-GUI to generate the build system of your choice:
 1. Set the source code location ("Where is the source code") to the project's root directory
 2. Set the binary building location ("Where to build the binaries") to the root directory followed by build/.
